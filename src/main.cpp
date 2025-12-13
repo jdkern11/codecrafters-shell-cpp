@@ -1,5 +1,6 @@
 #include "main.h"
 #include <iostream>
+#include <unistd.h>
 
 #ifdef _WIN32
     constexpr char PATH_DELIMITER = ';'; // Windows uses a semicolon for path separation in environment variables.
@@ -29,8 +30,10 @@ int main() {
       EchoCommand(user_input);
     } else if (user_input.starts_with("type")) {
       TypeCommand(user_input, valid_commands);
-    }
-    else {
+    } else if (user_input.starts_with("pwd")) {
+      fs::path current_dir = fs::current_path();
+      std::cout << current_dir.string() << '\n';
+    } else {
       std::string command = GetCommand(user_input);
       std::string filepath = GetCommandPath(command);
       if (filepath.empty()) {
