@@ -9,5 +9,5 @@ int main() {
   std::cout << "$ ";
   std::string command;
   std::cin >> command;
-  std::cerr << "invalid";
+  std::cerr << command << ": command not found";
 }
