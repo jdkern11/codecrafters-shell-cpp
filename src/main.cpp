@@ -1,4 +1,5 @@
 #include "main.h"
+#include <iostream>
 
 #ifdef _WIN32
     constexpr char PATH_DELIMITER = ';'; // Windows uses a semicolon for path separation in environment variables.
@@ -20,17 +21,25 @@ int main() {
   bool run = true;
   while (run) {
     std::cout << "$ ";
-    std::string command;
-    std::getline(std::cin, command);
-    if (command == "exit") {
+    std::string user_input;
+    std::getline(std::cin, user_input);
+    if (user_input == "exit") {
       run = false;
-    } else if (command.starts_with("echo")) {
-      EchoCommand(command);
-    } else if (command.starts_with("type")) {
-      TypeCommand(command, valid_commands);
+    } else if (user_input.starts_with("echo")) {
+      EchoCommand(user_input);
+    } else if (user_input.starts_with("type")) {
+      TypeCommand(user_input, valid_commands);
     }
     else {
-      std::cerr << command << ": command not found\n";
+      std::string command = GetCommand(user_input);
+      std::string filepath = GetCommandPath(command);
+      if (filepath.empty()) {
+        std::cerr << user_input << ": user_input not found\n";
+      } else  {
+        std::string args = GetCommandArguments(user_input);
+        std::string new_input = filepath + " " + args;
+        system(new_input.c_str());
+      }
     }
   }
 }
@@ -51,22 +60,28 @@ void TypeCommand(
   if (valid_commands.find(command_query) != valid_commands.end()) {
     std::cout << command_query << " is a shell builtin\n";
   } else {
-    std::string command_path = GetCommandPath(command_query);
-    if (command_path.empty()) {
+    std::string path = GetCommandPath(command_query);
+    if (!path.empty()) {
+      std::cout << command_query << " is " << path << '\n';
+    } else {
       std::cout << command_query << ": not found\n";
-    }
-    else {
-      std::cout << command_query << " is " << command_path << '\n';
     }
   }
 }
 
+std::string GetCommand(std::string command) {
+  int first_non_whitespace_ind = command.find_first_not_of(" ");
+  std::string command_query = command.substr(first_non_whitespace_ind);
+  int end_ind = command_query.find_first_of(" ");
+  return command_query.substr(0, end_ind);
+}
+
 std::string GetCommandArguments(std::string command) {
   int first_whitespace_ind = command.find_first_of(" ");
-  std::string command_query = command.substr(first_whitespace_ind);
-  int start_ind = command_query.find_first_not_of(" ");
-  int end_ind = command_query.find_last_not_of(" ");
-  return command_query.substr(start_ind, end_ind - start_ind + 1);
+  std::string command_args = command.substr(first_whitespace_ind);
+  int start_ind = command_args.find_first_not_of(" ");
+  int end_ind = command_args.find_last_not_of(" ");
+  return command_args.substr(start_ind, end_ind - start_ind + 1);
 }
 
 std::string GetCommandPath(std::string command) {
@@ -77,7 +92,6 @@ std::string GetCommandPath(std::string command) {
   while (std::getline(ss, folder, PATH_DELIMITER)) {
     try {
       for (const auto& entry: fs::directory_iterator(folder)) {
-        std::string loc = entry.path().string();
         std::string filename = entry.path().filename().string();
         if (command == filename) {
           std::error_code ec;
@@ -87,7 +101,7 @@ std::string GetCommandPath(std::string command) {
                               (p & fs::perms::group_exec) != fs::perms::none ||
                               (p & fs::perms::others_exec) != fs::perms::none;
             if (executable) {
-              return loc;
+              return entry.path().string();
             }
           }
         }
