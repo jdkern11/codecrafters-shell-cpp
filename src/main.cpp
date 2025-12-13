@@ -18,6 +18,7 @@ int main() {
   valid_commands.insert("exit");
   valid_commands.insert("echo");
   valid_commands.insert("type");
+  valid_commands.insert("pwd");
 
   bool run = true;
   while (run) {
