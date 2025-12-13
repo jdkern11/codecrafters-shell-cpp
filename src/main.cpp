@@ -75,6 +75,7 @@ std::string GetCommandPath(std::string command) {
   std::stringstream ss(path);
   std::string loc;
   while (std::getline(ss, loc, PATH_DELIMITER)) {
+    cout << loc << '\n'
     if (loc.ends_with(command)) {
       std::error_code ec;
       fs::perms p = fs::status(loc, ec).permissions();
