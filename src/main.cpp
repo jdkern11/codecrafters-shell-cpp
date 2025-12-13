@@ -6,10 +6,15 @@ int main() {
   std::cout << std::unitbuf;
   std::cerr << std::unitbuf;
 
-  while (true) {
+  bool run = true;
+  while (run) {
     std::cout << "$ ";
     std::string command;
     std::cin >> command;
-    std::cerr << command << ": command not found\n";
+    if (command == "exit") {
+      run = false;
+    } else {
+      std::cerr << command << ": command not found\n";
+    }
   }
 }
