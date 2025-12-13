@@ -76,7 +76,16 @@ std::string GetCommandPath(std::string command) {
   std::string loc;
   while (std::getline(ss, loc, PATH_DELIMITER)) {
     if (loc.ends_with(command)) {
-      return loc;
+      std::error_code ec;
+      fs::perms p = fs::status(loc, ec).permissions();
+      if (!ec) {
+        bool executable = (p & fs::perms::owner_exec) != fs::perms::none ||
+                          (p & fs::perms::group_exec) != fs::perms::none ||
+                          (p & fs::perms::others_exec) != fs::perms::none;
+        if (executable) {
+          return loc;
+        }
+      }
     }
   }
   return "";

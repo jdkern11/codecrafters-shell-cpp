@@ -6,6 +6,7 @@
 #include <unordered_set>
 #include <filesystem>
 
+namespace fs = std::filesystem;
 void EchoCommand(std::string command);
 void TypeCommand(std::string command, std::unordered_set<std::string> valid_commands);
 std::string GetCommandPath(std::string command);
