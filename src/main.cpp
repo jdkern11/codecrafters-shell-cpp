@@ -73,20 +73,27 @@ std::string GetCommandPath(std::string command) {
   char * val = getenv("PATH");
   std::string path = val == NULL ? std::string("") : std::string(val);
   std::stringstream ss(path);
-  std::string loc;
-  while (std::getline(ss, loc, PATH_DELIMITER)) {
-    std::cout << loc << '\n';
-    if (loc.ends_with(command)) {
-      std::error_code ec;
-      fs::perms p = fs::status(loc, ec).permissions();
-      if (!ec) {
-        bool executable = (p & fs::perms::owner_exec) != fs::perms::none ||
-                          (p & fs::perms::group_exec) != fs::perms::none ||
-                          (p & fs::perms::others_exec) != fs::perms::none;
-        if (executable) {
-          return loc;
+  std::string folder;
+  while (std::getline(ss, folder, PATH_DELIMITER)) {
+    try {
+      for (const auto& entry: fs::directory_iterator(folder)) {
+        std::string loc = entry.path().string();
+        std::string filename = entry.path().filename().string();
+        if (command == filename) {
+          std::error_code ec;
+          fs::perms p = fs::status(entry, ec).permissions();
+          if (!ec) {
+            bool executable = (p & fs::perms::owner_exec) != fs::perms::none ||
+                              (p & fs::perms::group_exec) != fs::perms::none ||
+                              (p & fs::perms::others_exec) != fs::perms::none;
+            if (executable) {
+              return loc;
+            }
+          }
         }
       }
+    } catch (const fs::filesystem_error& e) {
+      std::cerr << "Error accessing directory: " << e.what() << std::endl;
     }
   }
   return "";
