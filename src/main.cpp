@@ -36,9 +36,7 @@ int main() {
       if (filepath.empty()) {
         std::cerr << user_input << ": user_input not found\n";
       } else  {
-        std::string args = GetCommandArguments(user_input);
-        std::string new_input = filepath + " " + args;
-        system(new_input.c_str());
+        system(user_input.c_str());
       }
     }
   }
