@@ -1,26 +1,11 @@
-#include <iostream>
-#include <string>
-#include <unordered_set>
+#include "main.h"
 
-void echo_command(std::string command) {
-  if (command.length() > 5) {
-    std::cout << command.substr(5) << '\n';
-  } else {
-    std::cout << '\n';
-  }
-}
+#ifdef _WIN32
+    constexpr char PATH_DELIMITER = ';'; // Windows uses a semicolon for path separation in environment variables.
+#else
+    constexpr char PATH_DELIMITER = ':'; // Linux/macOS use a colon.
+#endif
 
-void type_command(
-    std::string command,
-    std::unordered_set<std::string> valid_commands
-) {
-  std::string command_query = command.substr(5);
-  if (valid_commands.find(command_query) != valid_commands.end()) {
-    std::cout << command_query << " is a shell builtin\n";
-  } else {
-    std::cout << command_query << ": not found\n";
-  }
-}
 
 int main() {
   // Flush after every std::cout / std:cerr
@@ -40,9 +25,9 @@ int main() {
     if (command == "exit") {
       run = false;
     } else if (command.starts_with("echo")) {
-      echo_command(command);
+      EchoCommand(command);
     } else if (command.starts_with("type")) {
-      type_command(command, valid_commands);
+      TypeCommand(command, valid_commands);
     }
     else {
       std::cerr << command << ": command not found\n";
@@ -50,3 +35,49 @@ int main() {
   }
 }
 
+void EchoCommand(std::string command) {
+  if (command.length() > 5) {
+    std::cout << command.substr(5) << '\n';
+  } else {
+    std::cout << '\n';
+  }
+}
+
+void TypeCommand(
+    std::string command,
+    std::unordered_set<std::string> valid_commands
+) {
+  std::string command_query = GetCommandArguments(command);
+  if (valid_commands.find(command_query) != valid_commands.end()) {
+    std::cout << command_query << " is a shell builtin\n";
+  } else {
+    std::string command_path = GetCommandPath(command_query);
+    if (command_path.empty()) {
+      std::cout << command_query << ": not found\n";
+    }
+    else {
+      std::cout << command_query << " is " << command_path << '\n';
+    }
+  }
+}
+
+std::string GetCommandArguments(std::string command) {
+  int first_whitespace_ind = command.find_first_of(" ");
+  std::string command_query = command.substr(first_whitespace_ind);
+  int start_ind = command_query.find_first_not_of(" ");
+  int end_ind = command_query.find_last_not_of(" ");
+  return command_query.substr(start_ind, end_ind - start_ind + 1);
+}
+
+std::string GetCommandPath(std::string command) {
+  char * val = getenv("PATH");
+  std::string path = val == NULL ? std::string("") : std::string(val);
+  std::stringstream ss(path);
+  std::string loc;
+  while (std::getline(ss, loc, PATH_DELIMITER)) {
+    if (loc.ends_with(command)) {
+      return loc;
+    }
+  }
+  return "";
+}
