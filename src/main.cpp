@@ -34,7 +34,7 @@ int main() {
       std::string command = GetCommand(user_input);
       std::string filepath = GetCommandPath(command);
       if (filepath.empty()) {
-        std::cerr << user_input << ": user_input not found\n";
+        std::cerr << user_input << ": command not found\n";
       } else  {
         system(user_input.c_str());
       }
