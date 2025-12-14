@@ -70,7 +70,7 @@ std::string CleanArg(std::string arg) {
   bool in_double_quote = false;
   bool backslashed = false;
   for (char c : arg) {
-    if (c == '\\' && !backslashed) {
+    if (c == '\\' && !backslashed && !in_single_quote) {
       backslashed = true;
       continue;
     }
