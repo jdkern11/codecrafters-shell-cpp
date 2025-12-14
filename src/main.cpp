@@ -79,14 +79,19 @@ void TypeCommand(
 }
 
 void ChangeDirectoryCommand(std::string path) {
-    fs::path dir = fs::path(path);
-    if (fs::exists(dir)) {
-      if (fs::is_directory(dir)) {
-        fs::current_path(dir);
-      }
-    } else {
-      std::cout << "cd: " << path << ": No such file or directory\n";
+  if (path[0] == '~') {
+    char * val = getenv("HOME");
+    std::string home_dir = val == NULL ? std::string("") : std::string(val);
+    path = home_dir + path.substr(1);
+  }
+  fs::path dir = fs::path(path);
+  if (fs::exists(dir)) {
+    if (fs::is_directory(dir)) {
+      fs::current_path(dir);
     }
+  } else {
+    std::cout << "cd: " << path << ": No such file or directory\n";
+  }
 }
 
 std::string GetCommand(std::string command) {
