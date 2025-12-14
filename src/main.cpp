@@ -1,37 +1,38 @@
 #include "main.h"
+#include <functional>
 #include <iostream>
 #include <unistd.h>
 #include <unordered_map>
-#include <functional>
 
 #ifdef _WIN32
-    constexpr char PATH_DELIMITER = ';'; // Windows uses a semicolon for path separation in environment variables.
+constexpr char PATH_DELIMITER = ';'; // Windows uses a semicolon for path
+
 #else
-    constexpr char PATH_DELIMITER = ':'; // Linux/macOS use a colon.
+constexpr char PATH_DELIMITER = ':'; // Linux/macOS use a colon.
 #endif
 
-
 int main() {
-  // Flush after every std::cout / std:cerr
   std::cout << std::unitbuf;
   std::cerr << std::unitbuf;
 
   bool run = true;
-  std::unordered_map<std::string, std::function<void(const std::string&)>> builtin_commands = {
-    {"exit", [&run](const std::string&) { run = false; }},
-    {"echo", EchoCommand},
-    {"pwd", [](const std::string&) { 
-      fs::path current_dir = fs::current_path();
-      std::cout << current_dir.string() << '\n';
-    }},
-    {"cd", ChangeDirectoryCommand},
-  };
+  std::unordered_map<std::string, std::function<void(const std::string &)>>
+      builtin_commands = {
+          {"exit", [&run](const std::string &) { run = false; }},
+          {"echo", EchoCommand},
+          {"pwd",
+           [](const std::string &) {
+             fs::path current_dir = fs::current_path();
+             std::cout << current_dir.string() << '\n';
+           }},
+          {"cd", ChangeDirectoryCommand},
+      };
   std::unordered_set<std::string> valid_commands;
-  for (const auto& pair : builtin_commands) {
+  for (const auto &pair : builtin_commands) {
     valid_commands.insert(pair.first);
   }
   valid_commands.insert("type");
-  builtin_commands["type"] = [&valid_commands](const std::string& input) { 
+  builtin_commands["type"] = [&valid_commands](const std::string &input) {
     TypeCommand(input, valid_commands);
   };
 
@@ -47,7 +48,7 @@ int main() {
       auto filepath = GetCommandPath(command);
       if (filepath.empty()) {
         std::cerr << user_input << ": command not found\n";
-      } else  {
+      } else {
         system(user_input.c_str());
       }
     }
@@ -72,25 +73,18 @@ std::string CleanArg(std::string arg) {
       in_single_quote = !in_single_quote;
     } else if (c == '"' && !in_single_quote) {
       in_double_quote = !in_double_quote;
-    }else if (
-        c == ' ' &&
-        arg_v.size() > 0 &&
-        arg_v.back() == ' ' &&
-        !in_single_quote &&
-        !in_double_quote
-    ) {
+    } else if (c == ' ' && arg_v.size() > 0 && arg_v.back() == ' ' &&
+               !in_single_quote && !in_double_quote) {
       continue;
     } else {
       arg_v.push_back(c);
     }
   }
-  return std::string (arg_v.begin(), arg_v.end());
+  return std::string(arg_v.begin(), arg_v.end());
 }
 
-void TypeCommand(
-    std::string command,
-    std::unordered_set<std::string> valid_commands
-) {
+void TypeCommand(std::string command,
+                 std::unordered_set<std::string> valid_commands) {
   if (valid_commands.find(command) != valid_commands.end()) {
     std::cout << command << " is a shell builtin\n";
   } else {
@@ -105,7 +99,7 @@ void TypeCommand(
 
 void ChangeDirectoryCommand(std::string path) {
   if (path[0] == '~') {
-    char * val = getenv("HOME");
+    char *val = getenv("HOME");
     std::string home_dir = val == NULL ? std::string("") : std::string(val);
     path = home_dir + path.substr(1);
   }
@@ -138,7 +132,7 @@ std::string GetCommandArguments(std::string command) {
 }
 
 std::string GetCommandPath(std::string command) {
-  char * val = getenv("PATH");
+  char *val = getenv("PATH");
   std::string path = val == NULL ? std::string("") : std::string(val);
   std::stringstream ss(path);
   std::string loc;
@@ -149,7 +143,7 @@ std::string GetCommandPath(std::string command) {
     if (loc_ec) {
       continue;
     } else if (fs::is_directory(s)) {
-      for (const auto& entry: fs::directory_iterator(loc)) {
+      for (const auto &entry : fs::directory_iterator(loc)) {
         std::string filename = entry.path().filename().string();
         if (command == filename) {
           std::error_code file_ec;
