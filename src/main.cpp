@@ -65,12 +65,20 @@ void EchoCommand(std::string arg) {
 
 std::string CleanArg(std::string arg) {
   std::vector<char> arg_v = {};
-  bool in_quote = false;
+  bool in_single_quote = false;
+  bool in_double_quote = false;
   for (char c : arg) {
-    if (c == '\'') {
-      in_quote = !in_quote;
-      continue;
-    } else if (c == ' ' && arg_v.size() > 0 && arg_v.back() == ' ' && !in_quote) {
+    if (c == '\'' && !in_double_quote) {
+      in_single_quote = !in_single_quote;
+    } else if (c == '"' && !in_single_quote) {
+      in_double_quote = !in_double_quote;
+    }else if (
+        c == ' ' &&
+        arg_v.size() > 0 &&
+        arg_v.back() == ' ' &&
+        !in_single_quote &&
+        !in_double_quote
+    ) {
       continue;
     } else {
       arg_v.push_back(c);
