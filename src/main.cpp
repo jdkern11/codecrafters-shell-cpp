@@ -85,7 +85,7 @@ void ChangeDirectoryCommand(std::string path) {
         fs::current_path(dir);
       }
     } else {
-      std::cout << "cd: " << path << ": No such file or directory";
+      std::cout << "cd: " << path << ": No such file or directory\n";
     }
 }
 
