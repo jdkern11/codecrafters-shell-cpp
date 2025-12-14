@@ -56,10 +56,27 @@ int main() {
 
 void EchoCommand(std::string arg) {
   if (!arg.empty()) {
-    std::cout << arg << '\n';
+    auto clean_arg = CleanArg(arg);
+    std::cout << clean_arg << '\n';
   } else {
     std::cout << '\n';
   }
+}
+
+std::string CleanArg(std::string arg) {
+  std::vector<char> arg_v = {};
+  bool in_quote = false;
+  for (char c : arg) {
+    if (c == '\'') {
+      in_quote = !in_quote;
+      continue;
+    } else if (c == ' ' && arg_v.size() > 0 && arg_v.back() == ' ' && !in_quote) {
+      continue;
+    } else {
+      arg_v.push_back(c);
+    }
+  }
+  return std::string (arg_v.begin(), arg_v.end());
 }
 
 void TypeCommand(
