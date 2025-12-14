@@ -6,10 +6,12 @@
 #include <filesystem>
 
 namespace fs = std::filesystem;
-void EchoCommand(std::string command);
+void EchoCommand(std::string arg);
 void TypeCommand(std::string command, std::unordered_set<std::string> valid_commands);
+void ChangeDirectoryCommand(std::string directory);
 std::string GetCommandPath(std::string command);
 std::string GetCommandArguments(std::string command);
 std::string GetCommand(std::string command);
+bool IsExecutable(fs::perms);
 
 #endif

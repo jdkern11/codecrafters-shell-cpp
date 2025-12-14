@@ -1,6 +1,8 @@
 #include "main.h"
 #include <iostream>
 #include <unistd.h>
+#include <unordered_map>
+#include <functional>
 
 #ifdef _WIN32
     constexpr char PATH_DELIMITER = ';'; // Windows uses a semicolon for path separation in environment variables.
@@ -14,29 +16,35 @@ int main() {
   std::cout << std::unitbuf;
   std::cerr << std::unitbuf;
 
-  std::unordered_set<std::string> valid_commands;
-  valid_commands.insert("exit");
-  valid_commands.insert("echo");
-  valid_commands.insert("type");
-  valid_commands.insert("pwd");
-
   bool run = true;
+  std::unordered_map<std::string, std::function<void(const std::string&)>> builtin_commands = {
+    {"exit", [&run](const std::string&) { run = false; }},
+    {"echo", EchoCommand},
+    {"pwd", [](const std::string&) { 
+      fs::path current_dir = fs::current_path();
+      std::cout << current_dir.string() << '\n';
+    }},
+    //{"cd", ChangeDirectoryCommand},
+  };
+  std::unordered_set<std::string> valid_commands;
+  for (const auto& pair : builtin_commands) {
+    valid_commands.insert(pair.first);
+  }
+  valid_commands.insert("type");
+  builtin_commands["type"] = [&valid_commands](const std::string& input) { 
+    TypeCommand(input, valid_commands);
+  };
+
   while (run) {
     std::cout << "$ ";
     std::string user_input;
     std::getline(std::cin, user_input);
-    if (user_input == "exit") {
-      run = false;
-    } else if (user_input.starts_with("echo")) {
-      EchoCommand(user_input);
-    } else if (user_input.starts_with("type")) {
-      TypeCommand(user_input, valid_commands);
-    } else if (user_input.starts_with("pwd")) {
-      fs::path current_dir = fs::current_path();
-      std::cout << current_dir.string() << '\n';
+    auto command = GetCommand(user_input);
+    if (builtin_commands.count(command)) {
+      auto args = GetCommandArguments(user_input);
+      builtin_commands[command](args);
     } else {
-      std::string command = GetCommand(user_input);
-      std::string filepath = GetCommandPath(command);
+      auto filepath = GetCommandPath(command);
       if (filepath.empty()) {
         std::cerr << user_input << ": command not found\n";
       } else  {
@@ -46,9 +54,9 @@ int main() {
   }
 }
 
-void EchoCommand(std::string command) {
-  if (command.length() > 5) {
-    std::cout << command.substr(5) << '\n';
+void EchoCommand(std::string arg) {
+  if (!arg.empty()) {
+    std::cout << arg << '\n';
   } else {
     std::cout << '\n';
   }
@@ -80,6 +88,9 @@ std::string GetCommand(std::string command) {
 
 std::string GetCommandArguments(std::string command) {
   int first_whitespace_ind = command.find_first_of(" ");
+  if (first_whitespace_ind == std::string::npos) {
+    return "";
+  }
   std::string command_args = command.substr(first_whitespace_ind);
   int start_ind = command_args.find_first_not_of(" ");
   int end_ind = command_args.find_last_not_of(" ");
@@ -90,27 +101,35 @@ std::string GetCommandPath(std::string command) {
   char * val = getenv("PATH");
   std::string path = val == NULL ? std::string("") : std::string(val);
   std::stringstream ss(path);
-  std::string folder;
-  while (std::getline(ss, folder, PATH_DELIMITER)) {
-    try {
-      for (const auto& entry: fs::directory_iterator(folder)) {
+  std::string loc;
+  while (std::getline(ss, loc, PATH_DELIMITER)) {
+    std::error_code loc_ec;
+    fs::file_status s = fs::status(fs::path(loc), loc_ec);
+    if (loc_ec) {
+      continue;
+    } else if (fs::is_directory(s)) {
+      for (const auto& entry: fs::directory_iterator(loc)) {
         std::string filename = entry.path().filename().string();
         if (command == filename) {
-          std::error_code ec;
-          fs::perms p = fs::status(entry, ec).permissions();
-          if (!ec) {
-            bool executable = (p & fs::perms::owner_exec) != fs::perms::none ||
-                              (p & fs::perms::group_exec) != fs::perms::none ||
-                              (p & fs::perms::others_exec) != fs::perms::none;
-            if (executable) {
-              return entry.path().string();
-            }
+          std::error_code file_ec;
+          fs::perms p = fs::status(entry, file_ec).permissions();
+          if (!file_ec && IsExecutable(p)) {
+            return entry.path().string();
           }
         }
       }
-    } catch (const fs::filesystem_error& e) {
-      std::cerr << "Error accessing directory: " << e.what() << std::endl;
+    } else if (fs::is_regular_file(s)) {
+      fs::perms p = s.permissions();
+      if (IsExecutable(p)) {
+        return loc;
+      }
     }
   }
   return "";
+}
+
+bool IsExecutable(fs::perms p) {
+  return (p & fs::perms::owner_exec) != fs::perms::none ||
+         (p & fs::perms::group_exec) != fs::perms::none ||
+         (p & fs::perms::others_exec) != fs::perms::none;
 }
