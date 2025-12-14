@@ -24,7 +24,7 @@ int main() {
       fs::path current_dir = fs::current_path();
       std::cout << current_dir.string() << '\n';
     }},
-    //{"cd", ChangeDirectoryCommand},
+    {"cd", ChangeDirectoryCommand},
   };
   std::unordered_set<std::string> valid_commands;
   for (const auto& pair : builtin_commands) {
@@ -66,17 +66,27 @@ void TypeCommand(
     std::string command,
     std::unordered_set<std::string> valid_commands
 ) {
-  std::string command_query = GetCommandArguments(command);
-  if (valid_commands.find(command_query) != valid_commands.end()) {
-    std::cout << command_query << " is a shell builtin\n";
+  if (valid_commands.find(command) != valid_commands.end()) {
+    std::cout << command << " is a shell builtin\n";
   } else {
-    std::string path = GetCommandPath(command_query);
+    std::string path = GetCommandPath(command);
     if (!path.empty()) {
-      std::cout << command_query << " is " << path << '\n';
+      std::cout << command << " is " << path << '\n';
     } else {
-      std::cout << command_query << ": not found\n";
+      std::cout << command << ": not found\n";
     }
   }
+}
+
+void ChangeDirectoryCommand(std::string path) {
+    fs::path dir = fs::path(path);
+    if (fs::exists(dir)) {
+      if (fs::is_directory(dir)) {
+        fs::current_path(dir);
+      }
+    } else {
+      std::cout << "cd: " << path << ": No such file or directory";
+    }
 }
 
 std::string GetCommand(std::string command) {
@@ -104,7 +114,8 @@ std::string GetCommandPath(std::string command) {
   std::string loc;
   while (std::getline(ss, loc, PATH_DELIMITER)) {
     std::error_code loc_ec;
-    fs::file_status s = fs::status(fs::path(loc), loc_ec);
+    fs::path loc_path = fs::path(loc);
+    fs::file_status s = fs::status(loc_path, loc_ec);
     if (loc_ec) {
       continue;
     } else if (fs::is_directory(s)) {
@@ -119,9 +130,12 @@ std::string GetCommandPath(std::string command) {
         }
       }
     } else if (fs::is_regular_file(s)) {
-      fs::perms p = s.permissions();
-      if (IsExecutable(p)) {
-        return loc;
+      std::string filename = loc_path.filename().string();
+      if (command == filename) {
+        fs::perms p = s.permissions();
+        if (IsExecutable(p)) {
+          return loc;
+        }
       }
     }
   }
