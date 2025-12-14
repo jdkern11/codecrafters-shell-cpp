@@ -1,14 +1,22 @@
-#include "main.h"
+#ifndef SRC_MAIN_CPP_
+#define SRC_MAIN_CPP_
+
+#include "./main.h"
+
+#include <unistd.h>
+
 #include <functional>
 #include <iostream>
-#include <unistd.h>
+#include <string>
 #include <unordered_map>
+#include <unordered_set>
+#include <vector>
 
 #ifdef _WIN32
-constexpr char PATH_DELIMITER = ';'; // Windows uses a semicolon for path
+constexpr char PATH_DELIMITER = ';';  // Windows uses a semicolon for path
 
 #else
-constexpr char PATH_DELIMITER = ':'; // Linux/macOS use a colon.
+constexpr char PATH_DELIMITER = ':';  // Linux/macOS use a colon.
 #endif
 
 int main() {
@@ -57,19 +65,20 @@ int main() {
 
 void EchoCommand(std::string arg) {
   if (!arg.empty()) {
-    auto clean_arg = CleanArg(arg);
+    auto clean_arg = FormatText(arg);
     std::cout << clean_arg << '\n';
   } else {
     std::cout << '\n';
   }
 }
 
-std::string CleanArg(std::string arg) {
-  std::vector<char> arg_v = {};
+std::string FormatText(std::string txt) {
+  std::vector<char> txt_v = {};
+  std::unordered_set<char> valid_doubleq_escapes = {'"', '\\', '$', '`', '\n'};
   bool in_single_quote = false;
   bool in_double_quote = false;
   bool backslashed = false;
-  for (char c : arg) {
+  for (char c : txt) {
     if (c == '\\' && !backslashed && !in_single_quote) {
       backslashed = true;
       continue;
@@ -78,15 +87,19 @@ std::string CleanArg(std::string arg) {
       in_single_quote = !in_single_quote;
     } else if (c == '"' && !in_single_quote && !backslashed) {
       in_double_quote = !in_double_quote;
-    } else if (c == ' ' && arg_v.size() > 0 && arg_v.back() == ' ' &&
+    } else if (c == ' ' && txt_v.size() > 0 && txt_v.back() == ' ' &&
                !in_single_quote && !in_double_quote && !backslashed) {
       continue;
     } else {
-      arg_v.push_back(c);
+      if (in_double_quote && backslashed &&
+          valid_doubleq_escapes.find(c) == valid_doubleq_escapes.end()) {
+        txt_v.push_back('\\');
+      }
+      txt_v.push_back(c);
       backslashed = false;
     }
   }
-  return std::string(arg_v.begin(), arg_v.end());
+  return std::string(txt_v.begin(), txt_v.end());
 }
 
 void TypeCommand(std::string command,
@@ -121,9 +134,15 @@ void ChangeDirectoryCommand(std::string path) {
 
 std::string GetCommand(std::string command) {
   int first_non_whitespace_ind = command.find_first_not_of(" ");
-  std::string command_query = command.substr(first_non_whitespace_ind);
-  int end_ind = command_query.find_first_of(" ");
-  return command_query.substr(0, end_ind);
+  std::string q = command.substr(first_non_whitespace_ind);
+  char delimiter = (q[0] == '\'') ? '\'' : (q[0] == '"') ? '"' : ' ';
+  int end_ind = q.find_first_of(delimiter, 1);
+  if (delimiter == ' ') {
+    return q.substr(0, end_ind);
+  }
+  std::string quoted_command = q.substr(0, end_ind + 1);
+  std::string formatted_command = FormatText(quoted_command);
+  return formatted_command;
 }
 
 std::string GetCommandArguments(std::string command) {
@@ -177,3 +196,5 @@ bool IsExecutable(fs::perms p) {
          (p & fs::perms::group_exec) != fs::perms::none ||
          (p & fs::perms::others_exec) != fs::perms::none;
 }
+
+#endif  // SRC_MAIN_CPP_
