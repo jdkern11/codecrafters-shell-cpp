@@ -1,31 +1,34 @@
 #ifndef SRC_MAIN_CPP_
 #define SRC_MAIN_CPP_
 
-#include "./utils.h"
-
 #include <unistd.h>
 
+#include <cstdio>
+#include <fstream>
 #include <functional>
 #include <iostream>
+#include <stdexcept>
 #include <string>
+#include <tuple>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
-#include <cstdio>
-#include <stdexcept>
-#include <tuple>
+
+#include "./utils.h"
 
 int main() {
   std::cout << std::unitbuf;
   std::cerr << std::unitbuf;
 
   bool run = true;
-  std::unordered_map<std::string, std::function<std::string(const std::string &)>>
+  std::unordered_map<std::string,
+                     std::function<std::string(const std::string &)>>
       builtin_commands = {
-          {"exit", [&run](const std::string &) -> std::string { 
-            run = false; 
-            return "";
-          }},
+          {"exit",
+           [&run](const std::string &) -> std::string {
+             run = false;
+             return "";
+           }},
           {"echo", EchoCommand},
           {"pwd",
            [](const std::string &) -> std::string {
@@ -39,7 +42,8 @@ int main() {
     valid_commands.insert(pair.first);
   }
   valid_commands.insert("type");
-  builtin_commands["type"] = [&valid_commands](const std::string &input) -> std::string {
+  builtin_commands["type"] =
+      [&valid_commands](const std::string &input) -> std::string {
     return TypeCommand(input, valid_commands);
   };
 
@@ -47,15 +51,25 @@ int main() {
     std::cout << "$ ";
     std::string user_input;
     std::getline(std::cin, user_input);
-    auto command = GetCommand(user_input);
+    auto [input, file] = RedirectOutput(user_input);
+    auto command = GetCommand(input);
     if (builtin_commands.count(command)) {
-      auto args = GetCommandArguments(user_input);
+      auto args = GetCommandArguments(input);
       try {
         auto result = builtin_commands[command](args);
         if (!result.empty()) {
-          std::cout << result;
-        };
-      } catch (const std::exception& e) {
+          if (file.empty()) {
+            std::cout << result;
+          } else {
+            fs::path filePath(file);
+            std::ofstream outFile(filePath);
+            if (outFile.is_open()) {
+              outFile << result;
+              outFile.close();
+            }
+          }
+        }
+      } catch (const std::exception &e) {
         std::cerr << e.what();
       }
     } else {
@@ -63,13 +77,24 @@ int main() {
       if (filepath.empty()) {
         std::cerr << user_input << ": command not found\n";
       } else {
-        FILE* pipe = popen(user_input.c_str(), "r");
+        FILE *pipe = popen(user_input.c_str(), "r");
         if (!pipe) {
           continue;
         }
         char buffer[128];
-        while (fgets(buffer, 128, pipe) != NULL) {
-          std::cout << buffer;
+        if (file.empty()) {
+          while (fgets(buffer, 128, pipe) != NULL) {
+            std::cout << buffer;
+          }
+        } else {
+          fs::path filePath(file);
+          std::ofstream outFile(filePath);
+          if (outFile.is_open()) {
+            while (fgets(buffer, 128, pipe) != NULL) {
+              outFile << buffer;
+            }
+            outFile.close();
+          }
         }
         pclose(pipe);
       }

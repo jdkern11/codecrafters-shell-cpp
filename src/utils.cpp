@@ -5,15 +5,15 @@
 
 #include <unistd.h>
 
+#include <cstdio>
 #include <functional>
 #include <iostream>
+#include <stdexcept>
 #include <string>
+#include <tuple>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
-#include <cstdio>
-#include <stdexcept>
-#include <tuple>
 
 #ifdef _WIN32
 constexpr char PATH_DELIMITER = ';';  // Windows uses a semicolon for path
@@ -23,19 +23,17 @@ constexpr char PATH_DELIMITER = ':';  // Linux/macOS use a colon.
 #endif
 
 std::tuple<std::string, std::string> RedirectOutput(std::string input) {
-  int operator_ind = input.find_first_not_of("1>");
+  int operator_ind = input.find_first_of("1>");
   int operator_size = 2;
   if (operator_ind == std::string::npos) {
-    operator_ind = input.find_first_not_of(">");
+    operator_ind = input.find_first_of(">");
     operator_size = 1;
   }
   if (operator_ind == std::string::npos) {
-    std::make_tuple(input, "");
+    return std::make_tuple(input, "");
   }
-  std::string command = input.substr(0, operator_ind);
-  std::string output_file = StripBeginningWhitespace(
-      input.substr(operator_ind + operator_size)
-  );
+  std::string command = Trim(input.substr(0, operator_ind));
+  std::string output_file = Trim(input.substr(operator_ind + operator_size));
 
   if (output_file.empty()) {
     throw std::runtime_error("Must specify an output file.");
@@ -43,14 +41,28 @@ std::tuple<std::string, std::string> RedirectOutput(std::string input) {
   return std::make_tuple(command, output_file);
 }
 
+std::string Trim(std::string txt) {
+  return StripEndingWhitespace(StripBeginningWhitespace(txt));
+}
+
 std::string StripBeginningWhitespace(std::string txt) {
   size_t first_non_whitespace_ind = txt.find_first_not_of(" ");
   if (first_non_whitespace_ind == std::string::npos) {
     return "";
   }
-  return first_non_whitespace_ind == 0 ? txt : txt.substr(first_non_whitespace_ind);
+  return first_non_whitespace_ind == 0 ? txt
+                                       : txt.substr(first_non_whitespace_ind);
 }
 
+std::string StripEndingWhitespace(std::string txt) {
+  size_t last_non_whitespace_ind = txt.find_last_not_of(" ");
+  if (last_non_whitespace_ind == std::string::npos) {
+    return "";
+  }
+  return last_non_whitespace_ind == txt.length()
+             ? txt
+             : txt.substr(0, last_non_whitespace_ind + 1);
+}
 std::string EchoCommand(std::string arg) {
   if (!arg.empty()) {
     auto clean_arg = FormatText(arg);
@@ -91,7 +103,7 @@ std::string FormatText(std::string txt) {
 }
 
 std::string TypeCommand(std::string command,
-                 std::unordered_set<std::string> valid_commands) {
+                        std::unordered_set<std::string> valid_commands) {
   if (valid_commands.find(command) != valid_commands.end()) {
     return command + " is a shell builtin\n";
   } else {

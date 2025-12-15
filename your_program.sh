@@ -16,13 +16,13 @@ set -e # Exit early if any commands fail
   cd "$(dirname "$0")" # Ensure compile steps are run within the repository directory
   cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake -DCMAKE_BUILD_TYPE=Debug
   cmake --build ./build
+  rm -rf tests_build
   mkdir tests_build
   cd tests_build
   cmake ../tests/
   cmake --build .
-  ./tests
   cd ..
-  rm -rf tests_build
+  tests_build/tests
 )
 
 # Copied from .codecrafters/run.sh
