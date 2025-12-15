@@ -49,8 +49,8 @@ TEST_CASE("StripEndingWhitespace", "[string]") {
 
 TEST_CASE("RedirectOutput", "[redirect]") {
   SECTION("No >") {
-    auto [input, file] = RedirectOutput("echo test");
-    REQUIRE(input == "echo test");
+    auto [input, file] = RedirectOutput("echo test 1");
+    REQUIRE(input == "echo test 1");
     REQUIRE(file.empty());
   }
 
@@ -64,5 +64,17 @@ TEST_CASE("RedirectOutput", "[redirect]") {
     auto [input, file] = RedirectOutput("echo test 1> file.txt");
     REQUIRE(input == "echo test");
     REQUIRE(file == "file.txt");
+  }
+
+  SECTION("Command has number") {
+    auto [input, file] = RedirectOutput("echo test 1> file1.txt");
+    REQUIRE(input == "echo test");
+    REQUIRE(file == "file1.txt");
+  }
+}
+
+TEST_CASE("GetCommand", "[string]") {
+  SECTION("Single Command") {
+    REQUIRE(GetCommand("/tmp/bee/f1") == "/tmp/bee/f1");
   }
 }

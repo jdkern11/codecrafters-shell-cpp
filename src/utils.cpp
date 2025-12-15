@@ -23,8 +23,8 @@ constexpr char PATH_DELIMITER = ':';  // Linux/macOS use a colon.
 #endif
 
 std::tuple<std::string, std::string> RedirectOutput(std::string input) {
-  int operator_ind = input.find_first_of("1>");
-  int operator_size = 2;
+  size_t operator_ind = input.find("1>");
+  size_t operator_size = 2;
   if (operator_ind == std::string::npos) {
     operator_ind = input.find_first_of(">");
     operator_size = 1;
