@@ -1,19 +1,22 @@
-#ifndef SRC_MAIN_H_
-#define SRC_MAIN_H_
+#ifndef SRC_UTILS_H_
+#define SRC_UTILS_H_
 
 #include <filesystem>
 #include <string>
 #include <unordered_set>
+#include <tuple>
 
 namespace fs = std::filesystem;
-void EchoCommand(std::string arg);
-void TypeCommand(std::string command,
+std::string EchoCommand(std::string arg);
+std::string TypeCommand(std::string command,
                  std::unordered_set<std::string> valid_commands);
-void ChangeDirectoryCommand(std::string path);
+std::string ChangeDirectoryCommand(std::string path);
 std::string FormatText(std::string txt);
 std::string GetCommandPath(std::string command);
 std::string GetCommandArguments(std::string command);
 std::string GetCommand(std::string command);
+std::string StripBeginningWhitespace(std::string txt);
+std::tuple<std::string, std::string> RedirectOutput(std::string input);
 bool IsExecutable(fs::perms);
 
-#endif  // SRC_MAIN_H_
+#endif  // SRC_UTILS_H_
