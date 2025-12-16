@@ -22,15 +22,23 @@ constexpr char PATH_DELIMITER = ';';  // Windows uses a semicolon for path
 constexpr char PATH_DELIMITER = ':';  // Linux/macOS use a colon.
 #endif
 
-std::tuple<std::string, std::string> RedirectOutput(std::string input) {
-  size_t operator_ind = input.find("1>");
+enum class RedirectType { OUTPUT, ERROR };
+
+std::tuple<std::string, std::string, std::string> RedirectOutput(
+    std::string input) {
+  RedirectType redirect_type = RedirectType::ERROR;
+  size_t operator_ind = input.find("2>");
   size_t operator_size = 2;
   if (operator_ind == std::string::npos) {
-    operator_ind = input.find_first_of(">");
-    operator_size = 1;
+    redirect_type = RedirectType::OUTPUT;
+    operator_ind = input.find("1>");
+    if (operator_ind == std::string::npos) {
+      operator_ind = input.find_first_of(">");
+      operator_size = 1;
+    }
   }
   if (operator_ind == std::string::npos) {
-    return std::make_tuple(input, "");
+    return std::make_tuple(input, "", "");
   }
   std::string command = Trim(input.substr(0, operator_ind));
   std::string output_file = Trim(input.substr(operator_ind + operator_size));
@@ -38,7 +46,9 @@ std::tuple<std::string, std::string> RedirectOutput(std::string input) {
   if (output_file.empty()) {
     throw std::runtime_error("Must specify an output file.");
   }
-  return std::make_tuple(command, output_file);
+  return std::make_tuple(
+      command, redirect_type == RedirectType::OUTPUT ? output_file : "",
+      redirect_type == RedirectType::ERROR ? output_file : "");
 }
 
 std::string Trim(std::string txt) {

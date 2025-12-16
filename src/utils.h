@@ -16,7 +16,7 @@ std::string GetCommandPath(std::string command);
 std::string GetCommandArguments(std::string command);
 std::string GetCommand(std::string command);
 std::string StripBeginningWhitespace(std::string txt);
-std::tuple<std::string, std::string> RedirectOutput(std::string input);
+std::tuple<std::string, std::string, std::string> RedirectOutput(std::string input);
 std::string StripEndingWhitespace(std::string txt);
 std::string Trim(std::string txt);
 bool IsExecutable(fs::perms);

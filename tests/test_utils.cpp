@@ -49,32 +49,43 @@ TEST_CASE("StripEndingWhitespace", "[string]") {
 
 TEST_CASE("RedirectOutput", "[redirect]") {
   SECTION("No >") {
-    auto [input, file] = RedirectOutput("echo test 1");
+    auto [input, output_file, error_file] = RedirectOutput("echo test 1");
     REQUIRE(input == "echo test 1");
-    REQUIRE(file.empty());
+    REQUIRE(output_file.empty());
+    REQUIRE(error_file.empty());
   }
 
   SECTION("With >") {
-    auto [input, file] = RedirectOutput("echo test > file.txt");
+    auto [input, output_file, error_file] = RedirectOutput("echo test > file.txt");
     REQUIRE(input == "echo test");
-    REQUIRE(file == "file.txt");
+    REQUIRE(output_file == "file.txt");
+    REQUIRE(error_file.empty());
   }
 
   SECTION("With 1>") {
-    auto [input, file] = RedirectOutput("echo test 1> file.txt");
+    auto [input, output_file, error_file] = RedirectOutput("echo test 1> file.txt");
     REQUIRE(input == "echo test");
-    REQUIRE(file == "file.txt");
+    REQUIRE(output_file == "file.txt");
+    REQUIRE(error_file.empty());
+  }
+
+  SECTION("With 2>") {
+    auto [input, output_file, error_file] = RedirectOutput("echo test 2> file.txt");
+    REQUIRE(input == "echo test");
+    REQUIRE(error_file == "file.txt");
+    REQUIRE(output_file.empty());
   }
 
   SECTION("Command has number") {
-    auto [input, file] = RedirectOutput("echo test 1> file1.txt");
+    auto [input, output_file, error_file] = RedirectOutput("echo test 1> file1.txt");
     REQUIRE(input == "echo test");
-    REQUIRE(file == "file1.txt");
+    REQUIRE(output_file == "file1.txt");
+    REQUIRE(error_file.empty());
   }
 }
 
 TEST_CASE("GetCommand", "[string]") {
   SECTION("Single Command") {
-    REQUIRE(GetCommand("/tmp/bee/f1") == "/tmp/bee/f1");
+    REQUIRE(GetCommand(" cat /tmp/bee/f1") == "cat");
   }
 }
