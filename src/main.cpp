@@ -56,56 +56,39 @@ int main() {
     std::cout << "$ ";
     std::string user_input;
     std::getline(std::cin, user_input);
-    auto [input, output_file, error_file] = RedirectOutput(user_input);
+    auto redirection_info = ParseRedirection(user_input);
+    std::ofstream write_file;
+    if (redirection_info.type != RedirectType::NONE) {
+      fs::path file_path{redirection_info.file};
+      write_file.open(file_path, redirection_info.open_mode);
+    }
+    auto input = redirection_info.input;
     auto command = GetCommand(input);
     if (builtin_commands.count(command)) {
       auto args = GetCommandArguments(input);
       try {
         auto result = builtin_commands[command](args);
         if (!result.empty()) {
-          if (output_file.empty()) {
-            std::cout << result;
+          if (redirection_info.type == RedirectType::OUTPUT) {
+            write_file << result;
           } else {
-            fs::path filePath{output_file};
-            std::ofstream outFile{filePath};
-            if (outFile.is_open()) {
-              outFile << result;
-              outFile.close();
-            }
-          }
-        }
-        // Open and close error file to pass test.
-        if (!error_file.empty()) {
-          fs::path filePath{error_file};
-          std::ofstream outFile{filePath};
-          if (outFile.is_open()) {
-            outFile.close();
+            std::cout << result;
           }
         }
       } catch (const std::exception &e) {
-        if (error_file.empty()) {
-          std::cerr << e.what();
+        if (redirection_info.type == RedirectType::ERROR) {
+          write_file << e.what();
         } else {
-          fs::path filePath{error_file};
-          std::ofstream outFile{filePath};
-          if (outFile.is_open()) {
-            outFile << e.what();
-            outFile.close();
-          }
+          std::cerr << e.what();
         }
       }
     } else {
       auto filepath = GetCommandPath(command);
       if (filepath.empty()) {
-        if (error_file.empty()) {
-          std::cerr << input << ": command not found\n";
+        if (redirection_info.type == RedirectType::ERROR) {
+          write_file << input << ": command not found\n";
         } else {
-          fs::path filePath{error_file};
-          std::ofstream outFile{filePath};
-          if (outFile.is_open()) {
-            outFile << input << ": command not found\n";
-            outFile.close();
-          }
+          std::cerr << input << ": command not found\n";
         }
       } else {
         int stdoutPipe[2];
@@ -115,47 +98,40 @@ int main() {
         pid_t pid = fork();
         if (pid == 0) {
           dup2(stdoutPipe[1], STDOUT_FILENO);
-          dup2(stderrPipe[1], STDERR_FILENO);
           close(stdoutPipe[0]);
           close(stdoutPipe[1]);
+          dup2(stderrPipe[1], STDERR_FILENO);
+          close(stderrPipe[0]);
+          close(stderrPipe[1]);
           execl("/bin/sh", "sh", "-c", input.c_str(), NULL);
+          perror("execl");
+          exit(1);
         } else {
           close(stdoutPipe[1]);
           close(stderrPipe[1]);
 
           char buffer[128];
           ssize_t bytes;
-          if (output_file.empty()) {
-            while ((bytes = read(stdoutPipe[0], buffer, 128)) > 0) {
+          while ((bytes = read(stdoutPipe[0], buffer, 128)) > 0) {
+            if (redirection_info.type == RedirectType::OUTPUT) {
+              write_file << std::string(buffer, bytes);
+            } else {
               std::cout << std::string(buffer, bytes);
             }
-          } else {
-            fs::path filePath{output_file};
-            std::ofstream outFile{filePath};
-            if (outFile.is_open()) {
-              while ((bytes = read(stdoutPipe[0], buffer, 128)) > 0) {
-                outFile << std::string(buffer, bytes);
-              }
-              outFile.close();
-            }
           }
-          if (error_file.empty()) {
-            while ((bytes = read(stderrPipe[0], buffer, 128)) > 0) {
+          while ((bytes = read(stderrPipe[0], buffer, 128)) > 0) {
+            if (redirection_info.type == RedirectType::ERROR) {
+              write_file << std::string(buffer, bytes);
+            } else {
               std::cerr << std::string(buffer, bytes);
-            }
-          } else {
-            fs::path filePath{error_file};
-            std::ofstream outFile{filePath};
-            if (outFile.is_open()) {
-              while ((bytes = read(stderrPipe[0], buffer, 128)) > 0) {
-                outFile << std::string(buffer, bytes);
-              }
-              outFile.close();
             }
           }
           waitpid(pid, NULL, 0);
         }
       }
+    }
+    if (write_file.is_open()) {
+      write_file.close();
     }
   }
 }

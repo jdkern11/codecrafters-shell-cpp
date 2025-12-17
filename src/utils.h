@@ -3,7 +3,6 @@
 
 #include <filesystem>
 #include <string>
-#include <tuple>
 #include <unordered_set>
 
 namespace fs = std::filesystem;
@@ -16,7 +15,19 @@ std::string GetCommandPath(std::string command);
 std::string GetCommandArguments(std::string command);
 std::string GetCommand(std::string command);
 std::string StripBeginningWhitespace(std::string txt);
-std::tuple<std::string, std::string, std::string> RedirectOutput(std::string input);
+
+enum class RedirectType { NONE, OUTPUT, ERROR };
+// Holds information related to Redirection, e.g., what input is to be
+// redirected, what is the file to redirect to, what information is being
+// redirected (none, stdout or stderr), and what file open mode to use (write or
+// append).
+struct RedirectionInfo {
+  const std::string input;
+  const std::string file;
+  const RedirectType type;
+  const std::ios_base::openmode open_mode;
+};
+RedirectionInfo ParseRedirection(const std::string& input);
 std::string StripEndingWhitespace(std::string txt);
 std::string Trim(std::string txt);
 bool IsExecutable(fs::perms);

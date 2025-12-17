@@ -1,5 +1,4 @@
 #include <catch2/catch.hpp>
-#include <tuple>
 
 #include "utils.h"
 
@@ -47,40 +46,60 @@ TEST_CASE("StripEndingWhitespace", "[string]") {
   }
 }
 
-TEST_CASE("RedirectOutput", "[redirect]") {
+TEST_CASE("ParseRedirection", "[redirect]") {
   SECTION("No >") {
-    auto [input, output_file, error_file] = RedirectOutput("echo test 1");
-    REQUIRE(input == "echo test 1");
-    REQUIRE(output_file.empty());
-    REQUIRE(error_file.empty());
+    auto info = ParseRedirection("echo test 1");
+    REQUIRE(info.input == "echo test 1");
+    REQUIRE(info.file.empty());
+    REQUIRE(info.type == RedirectType::NONE);
   }
 
   SECTION("With >") {
-    auto [input, output_file, error_file] = RedirectOutput("echo test > file.txt");
-    REQUIRE(input == "echo test");
-    REQUIRE(output_file == "file.txt");
-    REQUIRE(error_file.empty());
+    auto info = ParseRedirection("echo test > file.txt");
+    REQUIRE(info.input == "echo test");
+    REQUIRE(info.file == "file.txt");
+    REQUIRE(info.type == RedirectType::OUTPUT);
+    REQUIRE(info.open_mode == std::ios_base::out);
+  }
+
+  SECTION("With >>") {
+    auto info = ParseRedirection("echo test >> file.txt");
+    REQUIRE(info.input == "echo test");
+    REQUIRE(info.file == "file.txt");
+    REQUIRE(info.type == RedirectType::OUTPUT);
+    REQUIRE(info.open_mode == std::ios_base::app);
+  }
+
+  SECTION("With 2>>") {
+    auto info = ParseRedirection("echo test 2>> file.txt");
+    REQUIRE(info.input == "echo test");
+    REQUIRE(info.file == "file.txt");
+    REQUIRE(info.type == RedirectType::ERROR);
+    REQUIRE(info.open_mode == std::ios_base::app);
   }
 
   SECTION("With 1>") {
-    auto [input, output_file, error_file] = RedirectOutput("echo test 1> file.txt");
-    REQUIRE(input == "echo test");
-    REQUIRE(output_file == "file.txt");
-    REQUIRE(error_file.empty());
+    auto info = ParseRedirection("echo test 1> file.txt");
+    REQUIRE(info.input == "echo test");
+    REQUIRE(info.file == "file.txt");
+    REQUIRE(info.type == RedirectType::OUTPUT);
+    REQUIRE(info.open_mode == std::ios_base::out);
   }
 
   SECTION("With 2>") {
-    auto [input, output_file, error_file] = RedirectOutput("echo test 2> file.txt");
-    REQUIRE(input == "echo test");
-    REQUIRE(error_file == "file.txt");
-    REQUIRE(output_file.empty());
+    auto info = ParseRedirection("echo test 2> file.txt");
+    REQUIRE(info.input == "echo test");
+    REQUIRE(info.file == "file.txt");
+    REQUIRE(info.type == RedirectType::ERROR);
+    REQUIRE(info.open_mode == std::ios_base::out);
   }
 
   SECTION("Command has number") {
-    auto [input, output_file, error_file] = RedirectOutput("echo test 1> file1.txt");
-    REQUIRE(input == "echo test");
-    REQUIRE(output_file == "file1.txt");
-    REQUIRE(error_file.empty());
+    auto info = ParseRedirection("echo test 1> file1.txt");
+    REQUIRE(info.input == "echo test");
+    REQUIRE(info.file == "file1.txt");
+    REQUIRE(info.type == RedirectType::OUTPUT);
+    REQUIRE(info.open_mode == std::ios_base::out);
   }
 }
 

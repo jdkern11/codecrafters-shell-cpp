@@ -10,7 +10,6 @@
 #include <iostream>
 #include <stdexcept>
 #include <string>
-#include <tuple>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -22,33 +21,48 @@ constexpr char PATH_DELIMITER = ';';  // Windows uses a semicolon for path
 constexpr char PATH_DELIMITER = ':';  // Linux/macOS use a colon.
 #endif
 
-enum class RedirectType { OUTPUT, ERROR };
-
-std::tuple<std::string, std::string, std::string> RedirectOutput(
-    std::string input) {
-  RedirectType redirect_type = RedirectType::ERROR;
-  size_t operator_ind = input.find("2>");
-  size_t operator_size = 2;
-  if (operator_ind == std::string::npos) {
-    redirect_type = RedirectType::OUTPUT;
-    operator_ind = input.find("1>");
-    if (operator_ind == std::string::npos) {
-      operator_ind = input.find_first_of(">");
-      operator_size = 1;
+RedirectionInfo ParseRedirection(const std::string &input) {
+  std::ios_base::openmode open_mode;
+  RedirectType redirect_type = RedirectType::OUTPUT;
+  size_t operator_size = 0;
+  size_t operator_ind = std::string::npos;
+  for (size_t i = 0; i < input.length(); i++) {
+    if (input[i] == '>') {
+      operator_size += 1;
+      operator_ind = i;
+      if (i > 0 && (input[i - 1] == '1' || input[i - 1] == '2')) {
+        operator_ind = i - 1;
+        operator_size += 1;
+        redirect_type =
+            input[i - 1] == '1' ? RedirectType::OUTPUT : RedirectType::ERROR;
+      }
+      if (i < input.length() - 1) {
+        if (input[i + 1] == '>') {
+          operator_size += 1;
+          open_mode = std::ios_base::app;
+        } else {
+          open_mode = std::ios_base::out;
+        }
+      }
+      break;
     }
   }
   if (operator_ind == std::string::npos) {
-    return std::make_tuple(input, "", "");
+    // open_mode doesn't matter in this case.
+    return RedirectionInfo{input, "", RedirectType::NONE, std::ios_base::out};
   }
   std::string command = Trim(input.substr(0, operator_ind));
-  std::string output_file = Trim(input.substr(operator_ind + operator_size));
+  std::string file = Trim(input.substr(operator_ind + operator_size));
 
-  if (output_file.empty()) {
+  if (file.empty()) {
     throw std::runtime_error("Must specify an output file.");
   }
-  return std::make_tuple(
-      command, redirect_type == RedirectType::OUTPUT ? output_file : "",
-      redirect_type == RedirectType::ERROR ? output_file : "");
+  return RedirectionInfo{
+      command,
+      file,
+      redirect_type,
+      open_mode,
+  };
 }
 
 std::string Trim(std::string txt) {
