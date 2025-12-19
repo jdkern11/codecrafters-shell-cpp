@@ -12,10 +12,19 @@ target_link_libraries(shell PRIVATE readline)
 
 # Fast version
 # list(APPEND CMAKE_PREFIX_PATH spdlog/include)
-# find_package(spdlog REQUIRED)
-#  target_link_libraries(shell PRIVATE spdlog::spdlog)
+find_package(spdlog REQUIRED)
+target_link_libraries(shell PRIVATE spdlog::spdlog)
 
 # Slow version
-add_subdirectory(spdlog)
-target_link_libraries(shell PRIVATE spdlog::spdlog_header_only)
+#  target_link_libraries(shell PRIVATE spdlog::spdlog)
+# include(FetchContent)
+# 
+# FetchContent_Declare(
+#   spdlog
+#   GIT_REPOSITORY https://github.com/gabime/spdlog.git
+#   GIT_TAG        v1.10.0
+# )
+# FetchContent_MakeAvailable(spdlog)
+# # add_subdirectory(spdlog)
+# target_link_libraries(shell PRIVATE spdlog)
 
