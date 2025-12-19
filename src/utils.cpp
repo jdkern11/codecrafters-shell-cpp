@@ -14,6 +14,8 @@
 #include <unordered_set>
 #include <vector>
 
+#include "./trie.h"
+
 #ifdef _WIN32
 constexpr char PATH_DELIMITER = ';';  // Windows uses a semicolon for path
 
@@ -158,7 +160,7 @@ std::string ChangeDirectoryCommand(std::string path) {
   return "";
 }
 
-std::string GetCommand(std::string command) {
+std::string GetCommand(const std::string &command) {
   int first_non_whitespace_ind = command.find_first_not_of(" ");
   std::string q = command.substr(first_non_whitespace_ind);
   char delimiter = (q[0] == '\'') ? '\'' : (q[0] == '"') ? '"' : ' ';
@@ -182,7 +184,37 @@ std::string GetCommandArguments(std::string command) {
   return command_args.substr(start_ind, end_ind - start_ind + 1);
 }
 
-std::string GetCommandPath(std::string command) {
+void FillTrieWithPathExecutables(Trie *trie) {
+  char *val = getenv("PATH");
+  std::string path = val == NULL ? std::string("") : std::string(val);
+  std::stringstream ss(path);
+  std::string loc;
+  while (std::getline(ss, loc, PATH_DELIMITER)) {
+    std::error_code loc_ec;
+    fs::path loc_path = fs::path(loc);
+    fs::file_status s = fs::status(loc_path, loc_ec);
+    if (loc_ec) {
+      continue;
+    } else if (fs::is_directory(s)) {
+      for (const auto &entry : fs::directory_iterator(loc)) {
+        std::string filename = entry.path().filename().string();
+        std::error_code file_ec;
+        fs::perms p = fs::status(entry, file_ec).permissions();
+        if (!file_ec && IsExecutable(p) && !trie->contains(filename)) {
+          trie->insert(filename);
+        }
+      }
+    } else if (fs::is_regular_file(s)) {
+      std::string filename = loc_path.filename().string();
+      fs::perms p = s.permissions();
+      if (IsExecutable(p) && !trie->contains(filename)) {
+        trie->insert(filename);
+      }
+    }
+  }
+}
+
+std::string GetCommandPath(const std::string &command) {
   char *val = getenv("PATH");
   std::string path = val == NULL ? std::string("") : std::string(val);
   std::stringstream ss(path);

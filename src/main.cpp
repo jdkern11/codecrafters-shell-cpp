@@ -57,6 +57,7 @@ int main() {
   Trie trie = Trie{};
   trie.insert("echo");
   trie.insert("exit");
+  FillTrieWithPathExecutables(&trie);
   GLOBAL_TRIE = &trie;
 
   rl_completion_entry_function = &AutoComplete;
@@ -100,6 +101,9 @@ int main() {
           std::cerr << input << ": command not found\n";
         }
       } else {
+        if (!trie.contains(command)) {
+          trie.insert(command);
+        }
         int stdoutPipe[2];
         int stderrPipe[2];
         pipe(stdoutPipe);

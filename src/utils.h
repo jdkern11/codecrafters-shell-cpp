@@ -5,16 +5,19 @@
 #include <string>
 #include <unordered_set>
 
+#include "./trie.h"
+
 namespace fs = std::filesystem;
 std::string EchoCommand(std::string arg);
 std::string TypeCommand(std::string command,
                         std::unordered_set<std::string> valid_commands);
 std::string ChangeDirectoryCommand(std::string path);
 std::string FormatText(std::string txt);
-std::string GetCommandPath(std::string command);
+std::string GetCommandPath(const std::string& command);
 std::string GetCommandArguments(std::string command);
-std::string GetCommand(std::string command);
+std::string GetCommand(const std::string& command);
 std::string StripBeginningWhitespace(std::string txt);
+void FillTrieWithPathExecutables(Trie* trie);
 
 enum class RedirectType { NONE, OUTPUT, ERROR };
 // Holds information related to Redirection, e.g., what input is to be
