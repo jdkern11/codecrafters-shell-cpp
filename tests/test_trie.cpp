@@ -5,8 +5,7 @@
 #include "trie.h"
 
 TEST_CASE("UpdateTrieRoot", "[Trie]") {
-  SECTION("") {
-    spdlog::set_level(spdlog::level::debug);
+  SECTION("Inserts") {
     Trie trie = Trie{};
     REQUIRE(trie.size() == 0);
     REQUIRE(!trie.contains("hello"));
@@ -17,5 +16,22 @@ TEST_CASE("UpdateTrieRoot", "[Trie]") {
     trie.insert("hell");
     REQUIRE(trie.contains("hell"));
     REQUIRE(trie.size() == 5);
+  }
+
+  SECTION("Get Words") {
+    // spdlog::set_level(spdlog::level::debug);
+    Trie trie = Trie{};
+    trie.insert("hello");
+    trie.insert("hell");
+    trie.insert("help");
+    trie.insert("go");
+    trie.insert("goon");
+    trie.insert("away");
+
+    std::vector<std::string> ans = trie.getWords("h");
+    std::sort(ans.begin(), ans.end());
+    REQUIRE(ans == std::vector<std::string>{"hell", "hello", "help"});
+    REQUIRE(trie.getWords("i") == std::vector<std::string>{});
+    REQUIRE(trie.getWords("g") == std::vector<std::string>{"go", "goon"});
   }
 }

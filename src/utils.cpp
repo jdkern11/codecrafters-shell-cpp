@@ -49,7 +49,8 @@ RedirectionInfo ParseRedirection(const std::string &input) {
   }
   if (operator_ind == std::string::npos) {
     // open_mode doesn't matter in this case.
-    return RedirectionInfo{input, "", RedirectType::NONE, std::ios_base::out};
+    return RedirectionInfo{Trim(input), "", RedirectType::NONE,
+                           std::ios_base::out};
   }
   std::string command = Trim(input.substr(0, operator_ind));
   std::string file = Trim(input.substr(operator_ind + operator_size));

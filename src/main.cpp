@@ -1,6 +1,7 @@
 #ifndef SRC_MAIN_CPP_
 #define SRC_MAIN_CPP_
 
+#include <readline/readline.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
@@ -17,6 +18,7 @@
 #include <unordered_set>
 #include <utility>
 
+#include "./trie.h"
 #include "./utils.h"
 
 namespace fs = std::filesystem;
@@ -52,10 +54,17 @@ int main() {
     return TypeCommand(input, valid_commands);
   };
 
+  Trie trie = Trie{};
+  trie.insert("echo");
+  trie.insert("exit");
+  GLOBAL_TRIE = &trie;
+
+  rl_completion_entry_function = &AutoComplete;
+  rl_bind_key('\t', rl_complete);
   while (run) {
-    std::cout << "$ ";
-    std::string user_input;
-    std::getline(std::cin, user_input);
+    char *char_input = readline("$ ");
+    std::string user_input{char_input};
+    free(char_input);
     auto redirection_info = ParseRedirection(user_input);
     std::ofstream write_file;
     if (redirection_info.type != RedirectType::NONE) {

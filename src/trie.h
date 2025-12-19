@@ -3,6 +3,7 @@
 
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 struct TrieNode {
   const char letter;
@@ -23,8 +24,10 @@ class Trie {
   void insert(const std::string& word);
   bool contains(const std::string& word);
   int size();
+  std::vector<std::string> getWords(const std::string& prefix);
 };
+extern Trie* GLOBAL_TRIE;
 
-void UpdateTrieRoot(TrieNode& root, const std::string& word);
+char* AutoComplete(const char* text, int state);
 
 #endif  // SRC_TRIE_H_
