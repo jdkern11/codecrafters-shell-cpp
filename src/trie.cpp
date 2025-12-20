@@ -1,7 +1,7 @@
 #ifndef SRC_TRIE_CPP_
 #define SRC_TRIE_CPP_
 
-#include "./trie.h"
+#include "./trie.hpp"
 
 #include <readline/readline.h>
 #include <spdlog/spdlog.h>

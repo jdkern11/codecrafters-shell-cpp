@@ -1,6 +1,7 @@
 #include <catch2/catch.hpp>
+#include <vector>
 
-#include "utils.h"
+#include "utils.hpp"
 
 TEST_CASE("StripBeginningWhitespace", "[string]") {
   SECTION("Empty string") { REQUIRE(StripBeginningWhitespace("") == ""); }
@@ -106,5 +107,19 @@ TEST_CASE("ParseRedirection", "[redirect]") {
 TEST_CASE("GetCommand", "[string]") {
   SECTION("Single Command") {
     REQUIRE(GetCommand(" cat /tmp/bee/f1") == "cat");
+  }
+}
+
+TEST_CASE("GetPipes", "[pipes]") {
+  SECTION("Single Pipe") {
+    std::vector<std::string> expected = {"cat /tmp/bee/f1"};
+    REQUIRE(GetPipes(" cat /tmp/bee/f1") == expected);
+  }
+
+  SECTION("Multi Pipe") {
+    std::vector<std::string> expected = {"cat /tmp/bee/f1", "echo hi there",
+                                         "echo hey there"};
+    REQUIRE(GetPipes(" cat /tmp/bee/f1 | echo hi there | echo hey there") ==
+            expected);
   }
 }

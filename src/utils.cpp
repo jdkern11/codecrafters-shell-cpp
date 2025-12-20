@@ -1,7 +1,7 @@
 #ifndef SRC_UTILS_CPP_
 #define SRC_UTILS_CPP_
 
-#include "./utils.h"
+#include "./utils.hpp"
 
 #include <unistd.h>
 
@@ -14,7 +14,7 @@
 #include <unordered_set>
 #include <vector>
 
-#include "./trie.h"
+#include "./trie.hpp"
 
 #ifdef _WIN32
 constexpr char PATH_DELIMITER = ';';  // Windows uses a semicolon for path
@@ -22,6 +22,20 @@ constexpr char PATH_DELIMITER = ';';  // Windows uses a semicolon for path
 #else
 constexpr char PATH_DELIMITER = ':';  // Linux/macOS use a colon.
 #endif
+
+std::vector<std::string> GetPipes(const std::string &input) {
+  std::vector<std::string> pipes;
+  size_t prior_pipe_ind = 0;
+  for (size_t i = 0; i < input.length(); i++) {
+    if (input[i] == '|') {
+      pipes.push_back(Trim(input.substr(prior_pipe_ind, i - prior_pipe_ind)));
+      prior_pipe_ind = i + 1;
+    }
+  }
+  // Handle last pipe.
+  pipes.push_back(Trim(input.substr(prior_pipe_ind)));
+  return pipes;
+}
 
 RedirectionInfo ParseRedirection(const std::string &input) {
   std::ios_base::openmode open_mode;

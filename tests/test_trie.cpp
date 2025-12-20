@@ -2,7 +2,7 @@
 
 #include <catch2/catch.hpp>
 
-#include "trie.h"
+#include "trie.hpp"
 
 TEST_CASE("UpdateTrieRoot", "[Trie]") {
   SECTION("Inserts") {

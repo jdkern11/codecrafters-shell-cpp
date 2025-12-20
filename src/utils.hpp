@@ -4,8 +4,9 @@
 #include <filesystem>
 #include <string>
 #include <unordered_set>
+#include <vector>
 
-#include "./trie.h"
+#include "./trie.hpp"
 
 namespace fs = std::filesystem;
 std::string EchoCommand(std::string arg);
@@ -17,6 +18,7 @@ std::string GetCommandPath(const std::string& command);
 std::string GetCommandArguments(std::string command);
 std::string GetCommand(const std::string& command);
 std::string StripBeginningWhitespace(std::string txt);
+std::vector<std::string> GetPipes(const std::string& input);
 void FillTrieWithPathExecutables(Trie* trie);
 
 enum class RedirectType { NONE, OUTPUT, ERROR };
