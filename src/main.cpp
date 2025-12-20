@@ -207,6 +207,7 @@ void ExecuteInput(
             join = true;
           } else {
             argv.push_back(const_cast<char *>(split_args[i].c_str()));
+            join = false;
           }
         }
         if (join) {
