@@ -28,7 +28,8 @@ std::vector<std::string> SplitText(const std::string &input, char delimiter) {
   size_t prior_delimiter_ind = 0;
   for (size_t i = 0; i < input.length(); i++) {
     if (input[i] == delimiter) {
-      res.push_back(Trim(input.substr(prior_delimiter_ind, i - prior_delimiter_ind)));
+      res.push_back(
+          Trim(input.substr(prior_delimiter_ind, i - prior_delimiter_ind)));
       prior_delimiter_ind = i + 1;
     }
   }
@@ -69,7 +70,8 @@ RedirectionInfo ParseRedirection(const std::string &input) {
                            std::ios_base::out};
   }
   std::string command = Trim(input.substr(0, operator_ind));
-  std::string file = FormatText(Trim(input.substr(operator_ind + operator_size)));
+  std::string file =
+      FormatText(Trim(input.substr(operator_ind + operator_size)));
 
   if (file.empty()) {
     throw std::runtime_error("Must specify an output file.");
@@ -104,23 +106,58 @@ std::string StripEndingWhitespace(std::string txt) {
              ? txt
              : txt.substr(0, last_non_whitespace_ind + 1);
 }
+
 std::string EchoCommand(std::string arg) {
   if (!arg.empty()) {
-    auto clean_arg = FormatText(arg);
+    auto options = GetOptions(arg);
+    std::string clean_arg;
+    if (options.size() > 2) {
+      throw std::runtime_error("Only support -e command for echo");
+    }
+    if (options[0] == "-e") {
+      clean_arg = FormatText(options[1], true);
+    } else {
+      clean_arg = FormatText(options[0], false);
+    }
     return clean_arg + '\n';
   } else {
     return "\n";
   }
 }
 
-std::string FormatText(std::string txt) {
+std::vector<std::string> GetOptions(const std::string &input) {
+  static std::unordered_set<char> not_options = {' ', '-'};
+  std::vector<std::string> options;
+  bool opt = false;
+  size_t last_opt_ind = 0;
+  for (size_t i = 0; i < input.length(); i++) {
+    char c = input[i];
+    if (c == '-') {
+      opt = true;
+    } else if (opt && not_options.find(c) == not_options.end() &&
+               i < input.length() - 1 && input[i + 1] == ' ') {
+      options.push_back(input.substr(i - 1, 2));
+      opt = false;
+      last_opt_ind = i + 1;
+    }
+  }
+  if (last_opt_ind != input.length()) {
+    options.push_back(
+        Trim(input.substr(last_opt_ind, input.length() - last_opt_ind)));
+  }
+  return options;
+}
+
+std::string FormatText(std::string txt, bool option_e) {
   std::vector<char> txt_v = {};
-  std::unordered_set<char> valid_doubleq_escapes = {'"', '\\', '$', '`', '\n'};
+  std::unordered_map<char, char> valid_doubleq_escapes = {
+      {'"', '"'}, {'\\', '\\'}, {'$', '$'}, {'`', '`'}, {'n', '\n'},
+  };
   bool in_single_quote = false;
   bool in_double_quote = false;
   bool backslashed = false;
   for (char c : txt) {
-    if (c == '\\' && !backslashed && !in_single_quote) {
+    if (c == '\\' && !backslashed && !in_single_quote && option_e) {
       backslashed = true;
       continue;
     }
@@ -131,13 +168,16 @@ std::string FormatText(std::string txt) {
     } else if (c == ' ' && txt_v.size() > 0 && txt_v.back() == ' ' &&
                !in_single_quote && !in_double_quote && !backslashed) {
       continue;
-    } else {
-      if (in_double_quote && backslashed &&
-          valid_doubleq_escapes.find(c) == valid_doubleq_escapes.end()) {
-        txt_v.push_back('\\');
+    } else if (in_double_quote && backslashed && option_e) {
+      auto it = valid_doubleq_escapes.find(c);
+      if (it != valid_doubleq_escapes.end()) {
+        txt_v.push_back(it->second);
+      } else {
+        txt_v.push_back(c);
       }
-      txt_v.push_back(c);
       backslashed = false;
+    } else {
+      txt_v.push_back(c);
     }
   }
   return std::string(txt_v.begin(), txt_v.end());

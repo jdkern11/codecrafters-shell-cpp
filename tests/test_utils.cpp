@@ -119,12 +119,50 @@ TEST_CASE("SplitText", "[pipes]") {
   SECTION("Multi Pipe") {
     std::vector<std::string> expected = {"cat /tmp/bee/f1", "echo hi there",
                                          "echo hey there"};
-    REQUIRE(SplitText(" cat /tmp/bee/f1 | echo hi there | echo hey there", '|') ==
-            expected);
+    REQUIRE(SplitText(" cat /tmp/bee/f1 | echo hi there | echo hey there",
+                      '|') == expected);
   }
 
   SECTION("Multi space") {
     std::vector<std::string> expected = {"cat", "", "tmp"};
     REQUIRE(SplitText("cat  tmp", ' ') == expected);
+  }
+}
+
+TEST_CASE("Echo", "[echo]") {
+  SECTION("Simple Echo") { REQUIRE(EchoCommand("Hi   there") == "Hi there\n"); }
+
+  SECTION("Simple Echo in quotes") {
+    REQUIRE(EchoCommand("\"Hi   there\"") == "Hi   there\n");
+  }
+
+  SECTION("Simple Echo in quotes with newline") {
+    REQUIRE(EchoCommand("\"Hi   there\\n\"") == "Hi   there\\n\n");
+  }
+
+  SECTION("Simple Echo in quotes with newline -e") {
+    REQUIRE(EchoCommand("-e \"Hi   there\\n\"") == "Hi   there\n\n");
+  }
+}
+
+TEST_CASE("GetOptions", "[options]") {
+  SECTION("No options") {
+    std::vector<std::string> expected = {"Hi there"};
+    REQUIRE(GetOptions("Hi there") == expected);
+  }
+
+  SECTION("one option + extra") {
+    std::vector<std::string> expected = {"-e", "Hi there"};
+    REQUIRE(GetOptions("-e Hi there") == expected);
+  }
+
+  SECTION("two options + extra") {
+    std::vector<std::string> expected = {"-e", "-f", "Hi there"};
+    REQUIRE(GetOptions("-e -f Hi there") == expected);
+  }
+
+  SECTION("two options") {
+    std::vector<std::string> expected = {"-e", "-f"};
+    REQUIRE(GetOptions("-e -f") == expected);
   }
 }

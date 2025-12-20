@@ -1,6 +1,8 @@
 #ifndef SRC_MAIN_CPP_
 #define SRC_MAIN_CPP_
 
+#include "./main.hpp"
+
 #include <readline/readline.h>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -20,7 +22,6 @@
 
 #include "./trie.hpp"
 #include "./utils.hpp"
-#include "./main.hpp"
 
 namespace fs = std::filesystem;
 
@@ -122,8 +123,11 @@ int main() {
   }
 }
 
-void ExecuteInput(const std::string& user_input, int in_fd, int out_fd, std::unordered_map<std::string,
-                     std::function<std::string(const std::string &)>> builtin_commands) {
+void ExecuteInput(
+    const std::string &user_input, int in_fd, int out_fd,
+    std::unordered_map<std::string,
+                       std::function<std::string(const std::string &)>>
+        builtin_commands) {
   if (in_fd != STDIN_FILENO) {
     dup2(in_fd, STDIN_FILENO);
     close(in_fd);
@@ -186,19 +190,19 @@ void ExecuteInput(const std::string& user_input, int in_fd, int out_fd, std::uno
         close(stderrPipe[0]);
         close(stderrPipe[1]);
         auto split_args = SplitText(args, ' ');
-        std::vector<char*> argv;
+        std::vector<char *> argv;
         argv.push_back(const_cast<char *>(command.c_str()));
         bool join = false;
         for (size_t i = 0; i < split_args.size(); i++) {
           if (split_args[i].empty()) {
             continue;
           }
-          if (join && split_args[i][0] != '-' && split_args[i-1][1] != 'f') {
-            std::string a = split_args[i-1] + split_args[i];
+          if (join && split_args[i][0] != '-' && split_args[i - 1][1] != 'f') {
+            std::string a = split_args[i - 1] + split_args[i];
             argv.push_back(const_cast<char *>(a.c_str()));
             join = false;
           } else if (join && split_args[i][0] == '-') {
-            argv.push_back(const_cast<char *>(split_args[i-1].c_str()));
+            argv.push_back(const_cast<char *>(split_args[i - 1].c_str()));
           } else if (split_args[i][0] == '-') {
             join = true;
           } else {
@@ -206,7 +210,8 @@ void ExecuteInput(const std::string& user_input, int in_fd, int out_fd, std::uno
           }
         }
         if (join) {
-          argv.push_back(const_cast<char *>(split_args[split_args.size()-1].c_str()));
+          argv.push_back(
+              const_cast<char *>(split_args[split_args.size() - 1].c_str()));
         }
         argv.push_back(nullptr);
         execv(filepath.c_str(), argv.data());

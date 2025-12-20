@@ -13,12 +13,13 @@ std::string EchoCommand(std::string arg);
 std::string TypeCommand(std::string command,
                         std::unordered_set<std::string> valid_commands);
 std::string ChangeDirectoryCommand(std::string path);
-std::string FormatText(std::string txt);
+std::string FormatText(std::string txt, bool option_e = true);
 std::string GetCommandPath(const std::string& command);
 std::string GetCommandArguments(std::string command);
 std::string GetCommand(const std::string& command);
 std::string StripBeginningWhitespace(std::string txt);
 std::vector<std::string> SplitText(const std::string& input, char delimiter);
+std::vector<std::string> GetOptions(const std::string& input);
 void FillTrieWithPathExecutables(Trie* trie);
 
 enum class RedirectType { NONE, OUTPUT, ERROR };
