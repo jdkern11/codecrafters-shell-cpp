@@ -1,8 +1,6 @@
 #ifndef SRC_MAIN_CPP_
 #define SRC_MAIN_CPP_
 
-#include "./main.hpp"
-
 #include <readline/readline.h>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -22,6 +20,7 @@
 
 #include "./trie.hpp"
 #include "./utils.hpp"
+#include "./main.hpp"
 
 namespace fs = std::filesystem;
 
@@ -76,7 +75,7 @@ int main() {
     char *char_input = readline("$ ");
     std::string user_inputs{char_input};
     free(char_input);
-    auto inputs = GetPipes(user_inputs);
+    auto inputs = SplitText(user_inputs, '|');
     int prior_input = STDIN_FILENO;
     for (size_t i = 0; i < inputs.size(); i++) {
       int pipefd[2];
@@ -123,11 +122,8 @@ int main() {
   }
 }
 
-void ExecuteInput(
-    const std::string &user_input, int in_fd, int out_fd,
-    std::unordered_map<std::string,
-                       std::function<std::string(const std::string &)>>
-        builtin_commands) {
+void ExecuteInput(const std::string& user_input, int in_fd, int out_fd, std::unordered_map<std::string,
+                     std::function<std::string(const std::string &)>> builtin_commands) {
   if (in_fd != STDIN_FILENO) {
     dup2(in_fd, STDIN_FILENO);
     close(in_fd);
@@ -142,6 +138,10 @@ void ExecuteInput(
   std::ofstream write_file;
   if (redirection_info.type != RedirectType::NONE) {
     fs::path file_path{redirection_info.file};
+    fs::path dir_path = file_path.parent_path();
+    if (!dir_path.empty() && !fs::exists(dir_path)) {
+      fs::create_directories(dir_path);
+    }
     write_file.open(file_path, redirection_info.open_mode);
   }
   auto input = redirection_info.input;
@@ -185,12 +185,32 @@ void ExecuteInput(
         dup2(stderrPipe[1], STDERR_FILENO);
         close(stderrPipe[0]);
         close(stderrPipe[1]);
-        if (args.empty()) {
-          execl(filepath.c_str(), command.c_str(), NULL);
-        } else {
-          execl(filepath.c_str(), command.c_str(), args.c_str(), NULL);
+        auto split_args = SplitText(args, ' ');
+        std::vector<char*> argv;
+        argv.push_back(const_cast<char *>(command.c_str()));
+        bool join = false;
+        for (size_t i = 0; i < split_args.size(); i++) {
+          if (split_args[i].empty()) {
+            continue;
+          }
+          if (join && split_args[i][0] != '-' && split_args[i-1][1] != 'f') {
+            std::string a = split_args[i-1] + split_args[i];
+            argv.push_back(const_cast<char *>(a.c_str()));
+            join = false;
+          } else if (join && split_args[i][0] == '-') {
+            argv.push_back(const_cast<char *>(split_args[i-1].c_str()));
+          } else if (split_args[i][0] == '-') {
+            join = true;
+          } else {
+            argv.push_back(const_cast<char *>(split_args[i].c_str()));
+          }
         }
-        perror("execl");
+        if (join) {
+          argv.push_back(const_cast<char *>(split_args[split_args.size()-1].c_str()));
+        }
+        argv.push_back(nullptr);
+        execv(filepath.c_str(), argv.data());
+        perror("execv");
         exit(1);
       } else {
         close(stdoutPipe[1]);

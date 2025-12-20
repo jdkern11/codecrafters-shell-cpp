@@ -110,16 +110,21 @@ TEST_CASE("GetCommand", "[string]") {
   }
 }
 
-TEST_CASE("GetPipes", "[pipes]") {
+TEST_CASE("SplitText", "[pipes]") {
   SECTION("Single Pipe") {
     std::vector<std::string> expected = {"cat /tmp/bee/f1"};
-    REQUIRE(GetPipes(" cat /tmp/bee/f1") == expected);
+    REQUIRE(SplitText(" cat /tmp/bee/f1", '|') == expected);
   }
 
   SECTION("Multi Pipe") {
     std::vector<std::string> expected = {"cat /tmp/bee/f1", "echo hi there",
                                          "echo hey there"};
-    REQUIRE(GetPipes(" cat /tmp/bee/f1 | echo hi there | echo hey there") ==
+    REQUIRE(SplitText(" cat /tmp/bee/f1 | echo hi there | echo hey there", '|') ==
             expected);
+  }
+
+  SECTION("Multi space") {
+    std::vector<std::string> expected = {"cat", "", "tmp"};
+    REQUIRE(SplitText("cat  tmp", ' ') == expected);
   }
 }

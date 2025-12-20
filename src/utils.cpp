@@ -23,18 +23,18 @@ constexpr char PATH_DELIMITER = ';';  // Windows uses a semicolon for path
 constexpr char PATH_DELIMITER = ':';  // Linux/macOS use a colon.
 #endif
 
-std::vector<std::string> GetPipes(const std::string &input) {
-  std::vector<std::string> pipes;
-  size_t prior_pipe_ind = 0;
+std::vector<std::string> SplitText(const std::string &input, char delimiter) {
+  std::vector<std::string> res;
+  size_t prior_delimiter_ind = 0;
   for (size_t i = 0; i < input.length(); i++) {
-    if (input[i] == '|') {
-      pipes.push_back(Trim(input.substr(prior_pipe_ind, i - prior_pipe_ind)));
-      prior_pipe_ind = i + 1;
+    if (input[i] == delimiter) {
+      res.push_back(Trim(input.substr(prior_delimiter_ind, i - prior_delimiter_ind)));
+      prior_delimiter_ind = i + 1;
     }
   }
-  // Handle last pipe.
-  pipes.push_back(Trim(input.substr(prior_pipe_ind)));
-  return pipes;
+  // Handle last copy.
+  res.push_back(Trim(input.substr(prior_delimiter_ind)));
+  return res;
 }
 
 RedirectionInfo ParseRedirection(const std::string &input) {
@@ -69,7 +69,7 @@ RedirectionInfo ParseRedirection(const std::string &input) {
                            std::ios_base::out};
   }
   std::string command = Trim(input.substr(0, operator_ind));
-  std::string file = Trim(input.substr(operator_ind + operator_size));
+  std::string file = FormatText(Trim(input.substr(operator_ind + operator_size)));
 
   if (file.empty()) {
     throw std::runtime_error("Must specify an output file.");
