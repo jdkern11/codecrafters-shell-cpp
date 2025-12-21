@@ -132,6 +132,12 @@ TEST_CASE("GetCommandAndArgs", "[string]") {
     REQUIRE(command == "exe with \\'single quotes\\'");
     REQUIRE(arg == "/tmp/ant/f3");
   }
+
+  SECTION("Echo") {
+    auto [command, arg] = GetCommandAndArgs("echo \"James says Error\"");
+    REQUIRE(command == "echo");
+    REQUIRE(arg == "\"James says Error\"");
+  }
 }
 
 TEST_CASE("SplitText", "[pipes]") {
@@ -153,7 +159,7 @@ TEST_CASE("SplitText", "[pipes]") {
   }
 
   SECTION("confusing cat") {
-    auto res = SplitText("cat \"/tmp/pig/\\\"f 43\\\"", ' ');
+    auto res = SplitText("cat \"/tmp/pig/\\\"f 43\\\"", ' ', true);
     std::vector<std::string> expected = {"cat", "/tmp/pig/\"f 43\""};
     REQUIRE(res == expected);
   }

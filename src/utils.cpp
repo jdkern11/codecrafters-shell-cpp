@@ -23,21 +23,21 @@ constexpr char PATH_DELIMITER = ';';  // Windows uses a semicolon for path
 constexpr char PATH_DELIMITER = ':';  // Linux/macOS use a colon.
 #endif
 
-std::vector<std::string> SplitText(const std::string &input, char delimiter) {
+std::vector<std::string> SplitText(const std::string &input, char delimiter, bool format) {
   std::vector<std::string> res;
   size_t prior_delimiter_ind = 0;
   bool in_double_quote = false;
   bool backslash = false;
   for (size_t i = 0; i < input.length(); i++) {
-    if (input[i] == '\\' && !backslash) {
+    if (input[i] == '\\' && !backslash && format) {
       backslash = true;
-    } else if (input[i] == '"' && in_double_quote && !backslash) {
+    } else if (input[i] == '"' && in_double_quote && !backslash && format) {
       Trim(FormatText(input.substr(prior_delimiter_ind, i - prior_delimiter_ind), false));
       in_double_quote = false;
-    } else if (input[i] == '"' && !in_double_quote && !backslash) {
+    } else if (input[i] == '"' && !in_double_quote && !backslash && format) {
       prior_delimiter_ind = i;
       in_double_quote = true;
-    } else if (input[i] == delimiter && !in_double_quote && !backslash) {
+    } else if (input[i] == delimiter && ((!in_double_quote && !backslash) || !format)) {
       auto val =
           Trim(input.substr(prior_delimiter_ind, i - prior_delimiter_ind));
       if (!val.empty()) {

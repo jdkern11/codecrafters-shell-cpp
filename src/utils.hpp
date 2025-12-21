@@ -18,7 +18,7 @@ std::string GetCommandPath(const std::string& command);
 std::pair<std::string, std::string> GetCommandAndArgs(
     const std::string& command);
 std::string StripBeginningWhitespace(std::string txt);
-std::vector<std::string> SplitText(const std::string& input, char delimiter);
+std::vector<std::string> SplitText(const std::string& input, char delimiter, bool format = false);
 std::vector<std::string> GetOptions(const std::string& input);
 void FillTrieWithPathExecutables(Trie* trie);
 
