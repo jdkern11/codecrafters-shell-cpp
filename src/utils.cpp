@@ -230,7 +230,7 @@ std::pair<std::string, std::string> GetCommandAndArgs(
     return {q, ""};
   }
   std::string quoted_command = q.substr(0, end_ind + 1);
-  std::string formatted_command = FormatText(quoted_command);
+  std::string formatted_command = FormatText(quoted_command, false);
   return {Trim(formatted_command), Trim(q.substr(end_ind + 1))};
 }
 
