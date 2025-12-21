@@ -14,6 +14,7 @@
 #include <fstream>
 #include <functional>
 #include <iostream>
+#include <ranges>
 #include <string>
 #include <tuple>
 #include <unordered_map>
@@ -36,7 +37,6 @@ void sigterm_handler(int signal) {
 int main() {
   std::cout << std::unitbuf;
   std::cerr << std::unitbuf;
-
   std::unordered_map<std::string,
                      std::function<std::string(const std::string &)>>
       builtin_commands = {
@@ -77,7 +77,7 @@ int main() {
     std::string user_inputs{char_input};
     free(char_input);
     auto inputs = SplitText(user_inputs, '|');
-    int prior_input = STDIN_FILENO;
+    std::vector<std::pair<pid_t, int>> pids;
     for (size_t i = 0; i < inputs.size(); i++) {
       int pipefd[2];
       if (pipe(pipefd) == -1) {
@@ -95,6 +95,7 @@ int main() {
         if (i < inputs.size() - 1) {
           ExecuteInput(inputs[i], in_fd, pipefd[1], builtin_commands);
         } else {
+          close(pipefd[1]);
           ExecuteInput(inputs[i], in_fd, STDOUT_FILENO, builtin_commands);
         }
         exit(0);
@@ -108,16 +109,20 @@ int main() {
           perror("sigaction");
           return 1;
         }
-        if (prior_input != STDIN_FILENO) {
-          close(prior_input);
-        }
-        prior_input = in_fd;
         in_fd = pipefd[0];
-        waitpid(pid, NULL, 0);
+        pids.push_back({pid, pipefd[0]});
       }
     }
-    if (prior_input != STDIN_FILENO) {
-      close(prior_input);
+    bool first = true;
+    for (auto &[pid, pipe] : std::ranges::views::reverse(pids)) {
+      if (!first) {
+        kill(pid, SIGKILL);
+      }
+      waitpid(pid, NULL, 0);
+      first = false;
+      if (pipe != STDIN_FILENO) {
+        close(pipe);
+      }
     }
     in_fd = STDIN_FILENO;
   }
@@ -170,6 +175,13 @@ void ExecuteInput(
     }
   } else {
     auto filepath = GetCommandPath(command);
+    // bool is whether it has an argument after or not.
+    static std::unordered_map<std::string,
+                              std::unordered_map<std::string, bool>>
+        command_options = {
+            {"tail", {{"-f", false}}},
+            {"head", {{"-n", true}}},
+        };
     if (filepath.empty()) {
       if (redirection_info.type == RedirectType::ERROR) {
         write_file << input << ": command not found\n";
@@ -190,48 +202,50 @@ void ExecuteInput(
         close(stderrPipe[0]);
         close(stderrPipe[1]);
         auto split_args = SplitText(args, ' ');
-        std::vector<char *> argv;
-        argv.push_back(const_cast<char *>(command.c_str()));
-        bool join = false;
+        std::vector<char *> argv = {const_cast<char *>("stdbuf"),
+                                    const_cast<char *>("-o0"),
+                                    const_cast<char *>(filepath.c_str())};
+        auto opts = command_options.find(command);
+        // Needed to maintain lifetime, otherwise new_arg released from mem
+        // when dropped from defined scope.
+        std::vector<std::string> joined_args;
         for (size_t i = 0; i < split_args.size(); i++) {
-          if (split_args[i].empty()) {
-            continue;
-          }
-          if (join && split_args[i][0] != '-' && split_args[i - 1][1] != 'f') {
-            std::string a = split_args[i - 1] + split_args[i];
-            argv.push_back(const_cast<char *>(a.c_str()));
-            join = false;
-          } else if (join && split_args[i][0] == '-') {
-            argv.push_back(const_cast<char *>(split_args[i - 1].c_str()));
-          } else if (split_args[i][0] == '-') {
-            join = true;
-          } else {
+          std::string arg = split_args[i];
+          if (opts == command_options.end()) {
             argv.push_back(const_cast<char *>(split_args[i].c_str()));
-            join = false;
+          } else {
+            auto option = opts->second.find(arg);
+            if (option == opts->second.end() || !option->second) {
+              argv.push_back(const_cast<char *>(split_args[i].c_str()));
+            } else {
+              std::string new_arg = arg + " " + split_args[++i];
+              joined_args.push_back(new_arg);
+              argv.push_back(const_cast<char *>(new_arg.c_str()));
+            }
           }
-        }
-        if (join) {
-          argv.push_back(
-              const_cast<char *>(split_args[split_args.size() - 1].c_str()));
         }
         argv.push_back(nullptr);
-        execv(filepath.c_str(), argv.data());
+        if (setvbuf(stdout, NULL, _IOLBF, 0) != 0) {
+          perror("setvbuf failed in child");
+        }
+        execv("/usr/bin/stdbuf", argv.data());
         perror("execv");
         exit(1);
       } else {
         close(stdoutPipe[1]);
         close(stderrPipe[1]);
 
-        char buffer[128];
+        int buffer_size = 1;
+        char buffer[buffer_size];
         ssize_t bytes;
-        while ((bytes = read(stdoutPipe[0], buffer, 128)) > 0) {
+        while ((bytes = read(stdoutPipe[0], buffer, buffer_size)) > 0) {
           if (redirection_info.type == RedirectType::OUTPUT) {
             write_file << std::string(buffer, bytes);
           } else {
-            std::cout << std::string(buffer, bytes);
+            std::cout << std::string(buffer, bytes) << std::flush;
           }
         }
-        while ((bytes = read(stderrPipe[0], buffer, 128)) > 0) {
+        while ((bytes = read(stderrPipe[0], buffer, buffer_size)) > 0) {
           if (redirection_info.type == RedirectType::ERROR) {
             write_file << std::string(buffer, bytes);
           } else {

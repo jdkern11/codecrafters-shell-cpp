@@ -124,8 +124,8 @@ TEST_CASE("SplitText", "[pipes]") {
   }
 
   SECTION("Multi space") {
-    std::vector<std::string> expected = {"cat", "", "tmp"};
-    REQUIRE(SplitText("cat  tmp", ' ') == expected);
+    std::vector<std::string> expected = {"cat", "tmp"};
+    REQUIRE(SplitText("cat  tmp  ", ' ') == expected);
   }
 }
 

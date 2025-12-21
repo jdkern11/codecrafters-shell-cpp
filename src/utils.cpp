@@ -28,13 +28,19 @@ std::vector<std::string> SplitText(const std::string &input, char delimiter) {
   size_t prior_delimiter_ind = 0;
   for (size_t i = 0; i < input.length(); i++) {
     if (input[i] == delimiter) {
-      res.push_back(
-          Trim(input.substr(prior_delimiter_ind, i - prior_delimiter_ind)));
+      auto val =
+          Trim(input.substr(prior_delimiter_ind, i - prior_delimiter_ind));
+      if (!val.empty()) {
+        res.push_back(val);
+      }
       prior_delimiter_ind = i + 1;
     }
   }
   // Handle last copy.
-  res.push_back(Trim(input.substr(prior_delimiter_ind)));
+  auto val = Trim(input.substr(prior_delimiter_ind));
+  if (!val.empty()) {
+    res.push_back(val);
+  }
   return res;
 }
 
