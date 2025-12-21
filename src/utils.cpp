@@ -38,7 +38,7 @@ std::vector<std::string> SplitText(const std::string &input, char delimiter,
       auto val = Trim(FormatText(
           input.substr(prior_delimiter_ind, i - prior_delimiter_ind + 1),
           false));
-      res.push_back('"' + val + '"');
+      res.push_back(val);
       prior_delimiter_ind = i + 1;
       in_double_quote = false;
     } else if (input[i] == '"' && !in_double_quote && !backslash && format) {
