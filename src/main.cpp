@@ -214,7 +214,7 @@ void ExecuteInput(
         auto split_args = SplitText(args, ' ', true);
         std::vector<char *> argv = {const_cast<char *>("stdbuf"),
                                     const_cast<char *>("-o0"),
-                                    const_cast<char *>(filepath.c_str())};
+                                    const_cast<char *>(command.c_str())};
         auto opts = command_options.find(command);
         // Needed to maintain lifetime, otherwise new_arg released from mem
         // when dropped from defined scope.
