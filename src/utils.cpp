@@ -156,14 +156,17 @@ std::vector<std::string> GetOptions(const std::string &input) {
 
 std::string FormatText(std::string txt, bool option_e) {
   std::vector<char> txt_v = {};
-  std::unordered_map<char, char> valid_doubleq_escapes = {
+  static std::unordered_map<char, char> valid_e_escapes = {
       {'"', '"'}, {'\\', '\\'}, {'$', '$'}, {'`', '`'}, {'n', '\n'},
+  };
+  static std::unordered_map<char, char> valid_doubleq_escapes = {
+      {'"', '"'}, {'\\', '\\'}, {'$', '$'}, {'`', '`'}, {'\n', '\n'},
   };
   bool in_single_quote = false;
   bool in_double_quote = false;
   bool backslashed = false;
   for (char c : txt) {
-    if (c == '\\' && !backslashed && !in_single_quote && option_e) {
+    if (c == '\\' && !backslashed && !in_single_quote) {
       backslashed = true;
       continue;
     }
@@ -174,12 +177,22 @@ std::string FormatText(std::string txt, bool option_e) {
     } else if (c == ' ' && txt_v.size() > 0 && txt_v.back() == ' ' &&
                !in_single_quote && !in_double_quote && !backslashed) {
       continue;
-    } else if (in_double_quote && backslashed && option_e) {
-      auto it = valid_doubleq_escapes.find(c);
-      if (it != valid_doubleq_escapes.end()) {
-        txt_v.push_back(it->second);
+    } else if (in_double_quote && backslashed) {
+      if (option_e) {
+        auto it = valid_e_escapes.find(c);
+        if (it != valid_e_escapes.end()) {
+          txt_v.push_back(it->second);
+        } else {
+          txt_v.push_back(c);
+        }
       } else {
-        txt_v.push_back(c);
+        auto it = valid_doubleq_escapes.find(c);
+        if (it != valid_e_escapes.end()) {
+          txt_v.push_back(it->second);
+        } else {
+          txt_v.push_back('\\');
+          txt_v.push_back(c);
+        }
       }
       backslashed = false;
     } else {
