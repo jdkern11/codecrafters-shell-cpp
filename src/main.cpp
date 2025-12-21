@@ -154,8 +154,7 @@ void ExecuteInput(
     write_file.open(file_path, redirection_info.open_mode);
   }
   auto input = redirection_info.input;
-  auto command = GetCommand(input);
-  auto args = GetCommandArguments(input);
+  auto [command, args] = GetCommandAndArgs(input);
   if (builtin_commands.count(command)) {
     try {
       auto result = builtin_commands[command](args);

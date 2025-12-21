@@ -104,9 +104,27 @@ TEST_CASE("ParseRedirection", "[redirect]") {
   }
 }
 
-TEST_CASE("GetCommand", "[string]") {
-  SECTION("Single Command") {
-    REQUIRE(GetCommand(" cat /tmp/bee/f1") == "cat");
+TEST_CASE("GetCommandAndArgs", "[string]") {
+  SECTION("Single Arg") {
+    auto [command, arg] = GetCommandAndArgs(" cat /tmp/bee/f1");
+    REQUIRE(command == "cat");
+    REQUIRE(arg == "/tmp/bee/f1");
+  }
+
+  SECTION("No Arg") {
+    auto [command, arg] = GetCommandAndArgs(" ls ");
+    REQUIRE(command == "ls");
+    REQUIRE(arg == "");
+
+    auto [command2, arg2] = GetCommandAndArgs("ls");
+    REQUIRE(command2 == "ls");
+    REQUIRE(arg2 == "");
+  }
+
+  SECTION("Exec with space") {
+    auto [command, arg] = GetCommandAndArgs(" 'exe  with  space' /tmp/bee/f1");
+    REQUIRE(command == "exe  with  space");
+    REQUIRE(arg == "/tmp/bee/f1");
   }
 }
 

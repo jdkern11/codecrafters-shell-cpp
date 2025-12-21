@@ -15,8 +15,8 @@ std::string TypeCommand(std::string command,
 std::string ChangeDirectoryCommand(std::string path);
 std::string FormatText(std::string txt, bool option_e = true);
 std::string GetCommandPath(const std::string& command);
-std::string GetCommandArguments(std::string command);
-std::string GetCommand(const std::string& command);
+std::pair<std::string, std::string> GetCommandAndArgs(
+    const std::string& command);
 std::string StripBeginningWhitespace(std::string txt);
 std::vector<std::string> SplitText(const std::string& input, char delimiter);
 std::vector<std::string> GetOptions(const std::string& input);

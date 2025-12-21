@@ -220,28 +220,18 @@ std::string ChangeDirectoryCommand(std::string path) {
   return "";
 }
 
-std::string GetCommand(const std::string &command) {
+std::pair<std::string, std::string> GetCommandAndArgs(
+    const std::string &command) {
   int first_non_whitespace_ind = command.find_first_not_of(" ");
   std::string q = command.substr(first_non_whitespace_ind);
   char delimiter = (q[0] == '\'') ? '\'' : (q[0] == '"') ? '"' : ' ';
   int end_ind = q.find_first_of(delimiter, 1);
-  if (delimiter == ' ') {
-    return q.substr(0, end_ind);
+  if (end_ind == std::string::npos) {
+    return {q, ""};
   }
   std::string quoted_command = q.substr(0, end_ind + 1);
   std::string formatted_command = FormatText(quoted_command);
-  return formatted_command;
-}
-
-std::string GetCommandArguments(std::string command) {
-  int first_whitespace_ind = command.find_first_of(" ");
-  if (first_whitespace_ind == std::string::npos) {
-    return "";
-  }
-  std::string command_args = command.substr(first_whitespace_ind);
-  int start_ind = command_args.find_first_not_of(" ");
-  int end_ind = command_args.find_last_not_of(" ");
-  return command_args.substr(start_ind, end_ind - start_ind + 1);
+  return {Trim(formatted_command), Trim(q.substr(end_ind + 1))};
 }
 
 void FillTrieWithPathExecutables(Trie *trie) {
