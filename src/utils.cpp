@@ -244,7 +244,8 @@ std::pair<std::string, std::string> GetCommandAndArgs(
   }
   std::string quoted_command = q.substr(0, end_ind + 1);
   std::string formatted_command = FormatText(quoted_command, false);
-  return {Trim(formatted_command), Trim(q.substr(end_ind + 1))};
+  std::string formatted_args = FormatText(q.substr(end_ind + 1), false);
+  return {Trim(formatted_command), Trim(formatted_args)};
 }
 
 void FillTrieWithPathExecutables(Trie *trie) {

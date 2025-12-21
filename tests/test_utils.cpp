@@ -132,6 +132,12 @@ TEST_CASE("GetCommandAndArgs", "[string]") {
     REQUIRE(command == "exe with \\'single quotes\\'");
     REQUIRE(arg == "/tmp/ant/f3");
   }
+
+  SECTION("confusing cat") {
+    auto [command, arg] = GetCommandAndArgs("cat \"/tmp/pig/\\\"f 43\\\"");
+    REQUIRE(command == "cat");
+    REQUIRE(arg == "/tmp/pig/\"f 43\"");
+  }
 }
 
 TEST_CASE("SplitText", "[pipes]") {
