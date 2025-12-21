@@ -28,24 +28,54 @@ std::vector<std::string> SplitText(const std::string &input, char delimiter,
                                    bool format) {
   std::vector<std::string> res;
   size_t prior_delimiter_ind = 0;
-  bool in_double_quote = false;
   bool backslash = false;
-  spdlog::debug("Splitting text {} with delimiter {}.", input, delimiter);
+  spdlog::debug("Splitting text {} with delimiter {} and format {}.", input, delimiter, format);
   for (size_t i = 0; i < input.length(); i++) {
     if (input[i] == '\\' && !backslash && format) {
       backslash = true;
-    } else if (input[i] == '"' && in_double_quote && !backslash && format) {
-      auto val = Trim(FormatText(
-          input.substr(prior_delimiter_ind, i - prior_delimiter_ind + 1),
-          false));
+    } else if (input[i] == '"' && !backslash && format) {
+      spdlog::debug("Found a \"");
+      size_t j = input.find('\"', i+1);
+      if (j == std::string::npos) {
+        continue;
+      }
+      bool found = false;
+      while (input[j-1] == '\\') {
+        j = input.find('\"', j+1);
+        if (j == std::string::npos) {
+          found = false;
+          break;
+        }
+        found = true;
+      }
+      if (!found) continue;
+      spdlog::debug("Spitting at index {} and {}", i, j);
+      auto val = Trim(FormatText(input.substr(i, j - i + 1), false));
       res.push_back(val);
-      prior_delimiter_ind = i + 1;
-      in_double_quote = false;
-    } else if (input[i] == '"' && !in_double_quote && !backslash && format) {
-      prior_delimiter_ind = i;
-      in_double_quote = true;
-    } else if (input[i] == delimiter &&
-               ((!in_double_quote && !backslash) || !format)) {
+      prior_delimiter_ind = j + 1;
+      i = j;
+    } else if (input[i] == '\'' && !backslash && format) {
+      spdlog::debug("Found a '");
+      size_t j = input.find('\'', i+1);
+      if (j == std::string::npos) {
+        continue;
+      }
+      bool found = true;
+      while (input[j-1] == '\\') {
+        j = input.find('\'', j+1);
+        if (j == std::string::npos) {
+          found = false;
+          break;
+        }
+        found = true;
+      }
+      if (!found) continue;
+      spdlog::debug("Spitting at index {} and {}", i, j);
+      auto val = Trim(FormatText(input.substr(i, j - i + 1), false));
+      res.push_back(val);
+      prior_delimiter_ind = j + 1;
+      i = j;
+    } else if (input[i] == delimiter && (!backslash || !format)) {
       auto val =
           Trim(input.substr(prior_delimiter_ind, i - prior_delimiter_ind));
       if (!val.empty()) {

@@ -160,8 +160,14 @@ TEST_CASE("SplitText", "[pipes]") {
   }
 
   SECTION("confusing cat") {
-    auto res = SplitText("cat \"/tmp/pig/\\\"f 43\\\"", ' ', true);
+    auto res = SplitText("cat \"/tmp/pig/\\\"f 43\\\"\"", ' ', true);
     std::vector<std::string> expected = {"cat", "/tmp/pig/\"f 43\""};
+    REQUIRE(res == expected);
+  }
+
+  SECTION("confusing cat 2") {
+    auto res = SplitText("cat '/tmp/bee/f   21' '/tmp/bee/f   58' '/tmp/bee/f   18'", ' ', true);
+    std::vector<std::string> expected = {"cat", "/tmp/bee/f   21", "/tmp/bee/f   58", "/tmp/bee/f   18"};
     REQUIRE(res == expected);
   }
 }
