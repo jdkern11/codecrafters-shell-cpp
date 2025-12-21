@@ -81,6 +81,12 @@ int main() {
     auto inputs = SplitText(user_inputs, '|');
     std::vector<std::pair<pid_t, int>> pids;
     for (size_t i = 0; i < inputs.size(); i++) {
+      // Need a special exception for cd.
+      auto [command, args] = GetCommandAndArgs(inputs[i]);
+      if (command == "cd") {
+        auto result = builtin_commands[command](args);
+        continue;
+      }
       int pipefd[2];
       if (pipe(pipefd) == -1) {
         perror("pipe");
