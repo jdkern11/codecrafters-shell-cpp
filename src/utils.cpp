@@ -3,8 +3,8 @@
 
 #include "./utils.hpp"
 
-#include <unistd.h>
 #include <spdlog/spdlog.h>
+#include <unistd.h>
 
 #include <cstdio>
 #include <functional>
@@ -24,21 +24,28 @@ constexpr char PATH_DELIMITER = ';';  // Windows uses a semicolon for path
 constexpr char PATH_DELIMITER = ':';  // Linux/macOS use a colon.
 #endif
 
-std::vector<std::string> SplitText(const std::string &input, char delimiter, bool format) {
+std::vector<std::string> SplitText(const std::string &input, char delimiter,
+                                   bool format) {
   std::vector<std::string> res;
   size_t prior_delimiter_ind = 0;
   bool in_double_quote = false;
   bool backslash = false;
+  spdlog::debug("Splitting text {} with delimiter {}.", input, delimiter);
   for (size_t i = 0; i < input.length(); i++) {
     if (input[i] == '\\' && !backslash && format) {
       backslash = true;
     } else if (input[i] == '"' && in_double_quote && !backslash && format) {
-      Trim(FormatText(input.substr(prior_delimiter_ind, i - prior_delimiter_ind), false));
+      auto val = Trim(FormatText(
+          input.substr(prior_delimiter_ind, i - prior_delimiter_ind + 1),
+          false));
+      res.push_back('"' + val + '"');
+      prior_delimiter_ind = i + 1;
       in_double_quote = false;
     } else if (input[i] == '"' && !in_double_quote && !backslash && format) {
       prior_delimiter_ind = i;
       in_double_quote = true;
-    } else if (input[i] == delimiter && ((!in_double_quote && !backslash) || !format)) {
+    } else if (input[i] == delimiter &&
+               ((!in_double_quote && !backslash) || !format)) {
       auto val =
           Trim(input.substr(prior_delimiter_ind, i - prior_delimiter_ind));
       if (!val.empty()) {
@@ -55,12 +62,17 @@ std::vector<std::string> SplitText(const std::string &input, char delimiter, boo
   }
   // Handle last copy.
   auto val = Trim(input.substr(prior_delimiter_ind));
+  spdlog::debug("Last arg  is {}", val);
   if (!val.empty()) {
     if (format) {
       res.push_back(FormatText(val));
     } else {
       res.push_back(val);
     }
+  }
+  spdlog::debug("Split text is: ");
+  for (auto x : res) {
+    spdlog::debug(" {}", x);
   }
   return res;
 }
@@ -220,7 +232,9 @@ std::string FormatText(std::string txt, bool option_e) {
       txt_v.push_back(c);
     }
   }
-  return std::string(txt_v.begin(), txt_v.end());
+  auto res = std::string(txt_v.begin(), txt_v.end());
+  spdlog::debug("Formatted text was {} and is now {}.", txt, res);
+  return res;
 }
 
 std::string TypeCommand(std::string command,

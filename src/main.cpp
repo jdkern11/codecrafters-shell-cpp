@@ -4,9 +4,9 @@
 #include "./main.hpp"
 
 #include <readline/readline.h>
+#include <spdlog/spdlog.h>
 #include <sys/wait.h>
 #include <unistd.h>
-#include <spdlog/spdlog.h>
 
 #include <chrono>
 #include <cstdio>
@@ -216,14 +216,17 @@ void ExecuteInput(
         for (size_t i = 0; i < split_args.size(); i++) {
           std::string arg = split_args[i];
           if (opts == command_options.end()) {
+            spdlog::debug("Adding arg {}.", split_args[i]);
             argv.push_back(const_cast<char *>(split_args[i].c_str()));
           } else {
             auto option = opts->second.find(arg);
             if (option == opts->second.end() || !option->second) {
+              spdlog::debug("Adding arg {}.", split_args[i]);
               argv.push_back(const_cast<char *>(split_args[i].c_str()));
             } else {
               std::string new_arg = arg + split_args[++i];
               joined_args.push_back(new_arg);
+              spdlog::debug("Adding arg {}.", new_arg);
               argv.push_back(const_cast<char *>(new_arg.c_str()));
             }
           }

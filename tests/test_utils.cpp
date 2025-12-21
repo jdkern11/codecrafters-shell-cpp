@@ -128,7 +128,8 @@ TEST_CASE("GetCommandAndArgs", "[string]") {
   }
 
   SECTION("Exec with single quote") {
-    auto [command, arg] = GetCommandAndArgs("\"exe with \\'single quotes\\'\" /tmp/ant/f3");
+    auto [command, arg] =
+        GetCommandAndArgs("\"exe with \\'single quotes\\'\" /tmp/ant/f3");
     REQUIRE(command == "exe with \\'single quotes\\'");
     REQUIRE(arg == "/tmp/ant/f3");
   }
@@ -178,7 +179,8 @@ TEST_CASE("Echo", "[echo]") {
 
   SECTION("Simple Echo in quotes with newline -e") {
     REQUIRE(EchoCommand("-e \"Hi   there\\n\"") == "Hi   there\n\n");
-    REQUIRE(EchoCommand("\"hello'world'\\\\'shell\"") == "hello'world'\\'shell\n");
+    REQUIRE(EchoCommand("\"hello'world'\\\\'shell\"") ==
+            "hello'world'\\'shell\n");
   }
 }
 
