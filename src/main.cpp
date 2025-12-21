@@ -218,7 +218,7 @@ void ExecuteInput(
             if (option == opts->second.end() || !option->second) {
               argv.push_back(const_cast<char *>(split_args[i].c_str()));
             } else {
-              std::string new_arg = arg + " " + split_args[++i];
+              std::string new_arg = arg + split_args[++i];
               joined_args.push_back(new_arg);
               argv.push_back(const_cast<char *>(new_arg.c_str()));
             }
