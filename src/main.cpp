@@ -82,7 +82,7 @@ int main() {
     std::vector<std::pair<pid_t, int>> pids;
     for (size_t i = 0; i < inputs.size(); i++) {
       // Need a special exception for cd.
-      auto [command, args] = GetCommandAndArgs(input);
+      auto [command, args] = GetCommandAndArgs(inputs[i]);
       if (command == "cd") {
         ExecuteInput(inputs[i], in_fd, STDOUT_FILENO, builtin_commands);
         continue;
