@@ -6,6 +6,7 @@
 #include <readline/readline.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <spdlog/spdlog.h>
 
 #include <chrono>
 #include <cstdio>
@@ -72,6 +73,7 @@ int main() {
   rl_completion_entry_function = &AutoComplete;
   rl_bind_key('\t', rl_complete);
   int in_fd = STDIN_FILENO;
+  // spdlog::set_level(spdlog::level::debug);
   while (run) {
     char *char_input = readline("$ ");
     std::string user_inputs{char_input};
@@ -154,7 +156,9 @@ void ExecuteInput(
     write_file.open(file_path, redirection_info.open_mode);
   }
   auto input = redirection_info.input;
+  spdlog::debug("Input is {}.", input);
   auto [command, args] = GetCommandAndArgs(input);
+  spdlog::debug("Command is {}. Args are {}.", command, args);
   if (builtin_commands.count(command)) {
     try {
       auto result = builtin_commands[command](args);
@@ -174,6 +178,7 @@ void ExecuteInput(
     }
   } else {
     auto filepath = GetCommandPath(command);
+    spdlog::debug("File path is {}.", filepath);
     // bool is whether it has an argument after or not.
     static std::unordered_map<std::string,
                               std::unordered_map<std::string, bool>>

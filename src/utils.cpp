@@ -4,6 +4,7 @@
 #include "./utils.hpp"
 
 #include <unistd.h>
+#include <spdlog/spdlog.h>
 
 #include <cstdio>
 #include <functional>
@@ -41,7 +42,11 @@ std::vector<std::string> SplitText(const std::string &input, char delimiter, boo
       auto val =
           Trim(input.substr(prior_delimiter_ind, i - prior_delimiter_ind));
       if (!val.empty()) {
-        res.push_back(FormatText(val));
+        if (format) {
+          res.push_back(FormatText(val));
+        } else {
+          res.push_back(val);
+        }
       }
       prior_delimiter_ind = i + 1;
     } else {
@@ -51,7 +56,11 @@ std::vector<std::string> SplitText(const std::string &input, char delimiter, boo
   // Handle last copy.
   auto val = Trim(input.substr(prior_delimiter_ind));
   if (!val.empty()) {
-    res.push_back(FormatText(val));
+    if (format) {
+      res.push_back(FormatText(val));
+    } else {
+      res.push_back(val);
+    }
   }
   return res;
 }
@@ -247,9 +256,11 @@ std::string ChangeDirectoryCommand(std::string path) {
 
 std::pair<std::string, std::string> GetCommandAndArgs(
     const std::string &command) {
+  spdlog::debug("Getting command and args");
   int first_non_whitespace_ind = command.find_first_not_of(" ");
   std::string q = command.substr(first_non_whitespace_ind);
   char delimiter = (q[0] == '\'') ? '\'' : (q[0] == '"') ? '"' : ' ';
+  spdlog::debug("Delimiter is {}", delimiter);
   int end_ind = q.find_first_of(delimiter, 1);
   if (end_ind == std::string::npos) {
     return {q, ""};
