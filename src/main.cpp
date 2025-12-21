@@ -200,7 +200,7 @@ void ExecuteInput(
         dup2(stderrPipe[1], STDERR_FILENO);
         close(stderrPipe[0]);
         close(stderrPipe[1]);
-        auto split_args = SplitText(args, ' ');
+        auto split_args = SplitText(args, ' ', true);
         std::vector<char *> argv = {const_cast<char *>("stdbuf"),
                                     const_cast<char *>("-o0"),
                                     const_cast<char *>(filepath.c_str())};
