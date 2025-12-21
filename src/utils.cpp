@@ -39,7 +39,7 @@ std::vector<std::string> SplitText(const std::string &input, char delimiter,
       if (j == std::string::npos) {
         continue;
       }
-      bool found = false;
+      bool found = true;
       while (input[j-1] == '\\') {
         j = input.find('\"', j+1);
         if (j == std::string::npos) {
