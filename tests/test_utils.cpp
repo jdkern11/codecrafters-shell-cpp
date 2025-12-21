@@ -132,12 +132,6 @@ TEST_CASE("GetCommandAndArgs", "[string]") {
     REQUIRE(command == "exe with \\'single quotes\\'");
     REQUIRE(arg == "/tmp/ant/f3");
   }
-
-  SECTION("confusing cat") {
-    auto [command, arg] = GetCommandAndArgs("cat \"/tmp/pig/\\\"f 43\\\"");
-    REQUIRE(command == "cat");
-    REQUIRE(arg == "/tmp/pig/\"f 43\"");
-  }
 }
 
 TEST_CASE("SplitText", "[pipes]") {
@@ -157,6 +151,12 @@ TEST_CASE("SplitText", "[pipes]") {
     std::vector<std::string> expected = {"cat", "tmp"};
     REQUIRE(SplitText("cat  tmp  ", ' ') == expected);
   }
+
+  SECTION("confusing cat") {
+    auto res = SplitText("cat \"/tmp/pig/\\\"f 43\\\"", ' ');
+    std::vector<std::string> expected = {"cat", "/tmp/pig/\"f 43\""};
+    REQUIRE(res == expected);
+  }
 }
 
 TEST_CASE("Echo", "[echo]") {
@@ -172,6 +172,7 @@ TEST_CASE("Echo", "[echo]") {
 
   SECTION("Simple Echo in quotes with newline -e") {
     REQUIRE(EchoCommand("-e \"Hi   there\\n\"") == "Hi   there\n\n");
+    REQUIRE(EchoCommand("\"hello'world'\\\\'shell\"") == "hello'world'\\'shell\n");
   }
 }
 

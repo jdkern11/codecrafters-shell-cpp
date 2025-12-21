@@ -26,20 +26,32 @@ constexpr char PATH_DELIMITER = ':';  // Linux/macOS use a colon.
 std::vector<std::string> SplitText(const std::string &input, char delimiter) {
   std::vector<std::string> res;
   size_t prior_delimiter_ind = 0;
+  bool in_double_quote = false;
+  bool backslash = false;
   for (size_t i = 0; i < input.length(); i++) {
-    if (input[i] == delimiter) {
+    if (input[i] == '\\' && !backslash) {
+      backslash = true;
+    } else if (input[i] == '"' && in_double_quote && !backslash) {
+      Trim(FormatText(input.substr(prior_delimiter_ind, i - prior_delimiter_ind), false));
+      in_double_quote = false;
+    } else if (input[i] == '"' && !in_double_quote && !backslash) {
+      prior_delimiter_ind = i;
+      in_double_quote = true;
+    } else if (input[i] == delimiter && !in_double_quote && !backslash) {
       auto val =
           Trim(input.substr(prior_delimiter_ind, i - prior_delimiter_ind));
       if (!val.empty()) {
-        res.push_back(val);
+        res.push_back(FormatText(val));
       }
       prior_delimiter_ind = i + 1;
+    } else {
+      backslash = false;
     }
   }
   // Handle last copy.
   auto val = Trim(input.substr(prior_delimiter_ind));
   if (!val.empty()) {
-    res.push_back(val);
+    res.push_back(FormatText(val));
   }
   return res;
 }
@@ -244,8 +256,8 @@ std::pair<std::string, std::string> GetCommandAndArgs(
   }
   std::string quoted_command = q.substr(0, end_ind + 1);
   std::string formatted_command = FormatText(quoted_command, false);
-  std::string formatted_args = FormatText(q.substr(end_ind + 1), false);
-  return {Trim(formatted_command), Trim(formatted_args)};
+  std::string args = q.substr(end_ind + 1);
+  return {Trim(formatted_command), Trim(args)};
 }
 
 void FillTrieWithPathExecutables(Trie *trie) {
