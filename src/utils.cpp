@@ -229,6 +229,7 @@ std::string FormatText(std::string txt, bool option_e) {
       }
       backslashed = false;
     } else {
+      backslashed = false;
       txt_v.push_back(c);
     }
   }

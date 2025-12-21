@@ -182,6 +182,11 @@ TEST_CASE("Echo", "[echo]") {
     REQUIRE(EchoCommand("\"hello'world'\\\\'shell\"") ==
             "hello'world'\\'shell\n");
   }
+
+  SECTION("Escaped Spaces") {
+    auto res = EchoCommand("hello\\ \\ \\ \\ \\ \\ script");
+    REQUIRE(res == "hello      script\n");
+  }
 }
 
 TEST_CASE("GetOptions", "[options]") {
