@@ -53,6 +53,7 @@ int main() {
              return current_dir.string() + '\n';
            }},
           {"cd", ChangeDirectoryCommand},
+          {"history", [](const std::string &) -> std::string { return ""; }},
       };
   std::unordered_set<std::string> valid_commands;
   for (const auto &pair : builtin_commands) {
