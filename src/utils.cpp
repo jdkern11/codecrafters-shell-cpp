@@ -278,7 +278,7 @@ std::string TypeCommand(std::string command,
     if (!path.empty()) {
       return command + " is " + path + '\n';
     } else {
-      throw std::runtime_error(command + ": not found\n");
+      throw std::runtime_error(command + ": not found");
     }
   }
 }
@@ -295,7 +295,7 @@ std::string ChangeDirectoryCommand(std::string path) {
       fs::current_path(dir);
     }
   } else {
-    throw std::runtime_error("cd: " + path + ": No such file or directory\n");
+    throw std::runtime_error("cd: " + path + ": No such file or directory");
   }
   return "";
 }

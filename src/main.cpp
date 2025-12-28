@@ -8,6 +8,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
+#include <algorithm>
 #include <chrono>
 #include <cstdio>
 #include <exception>
@@ -56,18 +57,25 @@ int main() {
            }},
           {"cd", ChangeDirectoryCommand},
           {"history",
-           [](const std::string & input) -> std::string {
-             auto [_, args] = GetCommandAndArgs(input);
-             int hist_size = 0;
-             if (!args.empty()) {
-               hist_size = std::stoi(args);
-             }
-             size_t i = std::max(0, history.size() - hist_size);
+           [](const std::string &arg) -> std::string {
              auto history = shist::GetHistory();
+             int hist_size = history.size();
+             if (!arg.empty()) {
+               auto args = SplitText(arg, ' ');
+               if (args.size() > 1) {
+                 throw std::runtime_error("too many arguments.");
+               }
+               hist_size = std::stoi(args[0]);
+               if (hist_size < 0) {
+                 throw std::runtime_error("invalid option.");
+               }
+             }
+             size_t i =
+                 std::max(0, (static_cast<int>(history.size()) - hist_size));
              std::string res = "";
              for (i; i < history.size(); i++) {
-               res = res + "    " + std::to_string(i+1) + "  " + s + '\n';
-               input_count++;
+               res = res + "    " + std::to_string(i + 1) + "  " + history[i] +
+                     '\n';
              }
              return res;
            }},
@@ -199,9 +207,9 @@ void ExecuteInput(
       }
     } catch (const std::exception &e) {
       if (redirection_info.type == RedirectType::ERROR) {
-        write_file << e.what();
+        write_file << e.what() << '\n';
       } else {
-        std::cerr << e.what();
+        std::cerr << e.what() << '\n';
       }
     }
   } else {
