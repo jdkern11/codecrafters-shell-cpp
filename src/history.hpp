@@ -20,6 +20,7 @@ class History {
   size_t max_size;
   void insert(const std::string& txt);
   std::vector<std::string> get();
+  std::vector<std::string> getReverse();
   History();
   History(size_t max_size);
   ~History();

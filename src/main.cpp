@@ -56,13 +56,17 @@ int main() {
            }},
           {"cd", ChangeDirectoryCommand},
           {"history",
-           [](const std::string &) -> std::string {
+           [](const std::string & input) -> std::string {
+             auto [_, args] = GetCommandAndArgs(input);
+             int hist_size = 0;
+             if (!args.empty()) {
+               hist_size = std::stoi(args);
+             }
+             size_t i = std::max(0, history.size() - hist_size);
              auto history = shist::GetHistory();
              std::string res = "";
-             int input_count = 1;
-             for (auto it = history.rbegin(); it != history.rend(); ++it) {
-               res = res + "    " + std::to_string(input_count) + "  " + *it +
-                     '\n';
+             for (i; i < history.size(); i++) {
+               res = res + "    " + std::to_string(i+1) + "  " + s + '\n';
                input_count++;
              }
              return res;

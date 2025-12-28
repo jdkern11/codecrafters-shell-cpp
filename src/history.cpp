@@ -67,12 +67,23 @@ std::vector<std::string> hist::History::get() {
   return res;
 }
 
+std::vector<std::string> hist::History::getReverse() {
+  std::vector<std::string> res;
+  Node* n = this->tail;
+  while (n != nullptr) {
+    spdlog::debug("Reading node with text \"{}\".", n->txt);
+    res.push_back(n->txt);
+    n = n->prior;
+  }
+  return res;
+}
+
 hist::History* hist::GLOBAL_HISTORY = nullptr;
 std::vector<std::string> hist::GetHistory() {
   if (GLOBAL_HISTORY == nullptr) {
     throw std::runtime_error("Must configure `GLOBAL_HISTORY` variable.");
   }
-  return GLOBAL_HISTORY->get();
+  return GLOBAL_HISTORY->getReverse();
 }
 
 #endif  // SRC_HISTORY_CPP_

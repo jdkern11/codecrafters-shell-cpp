@@ -20,6 +20,8 @@ TEST_CASE("HistoryTests", "[History]") {
     REQUIRE(hist.size == 3);
     std::vector<std::string> expected = {"Ho there", "Hi there", "Hello there"};
     REQUIRE(hist.get() == expected);
+    expected = {"Hello there", "Hi there", "Ho there"};
+    REQUIRE(hist.getReverse() == expected);
   }
 
   SECTION("Deletions") {
@@ -44,14 +46,17 @@ TEST_CASE("HistoryTests", "[History]") {
     hist.insert("Hello there");
     std::vector<std::string> expected = {"Hello there"};
     REQUIRE(hist.get() == expected);
+    REQUIRE(hist.getReverse() == expected);
     REQUIRE(hist.size == 1);
     hist.insert("Hi there");
     expected = {"Hi there"};
     REQUIRE(hist.get() == expected);
+    REQUIRE(hist.getReverse() == expected);
     REQUIRE(hist.size == 1);
     hist.insert("Ho there");
     expected = {"Ho there"};
     REQUIRE(hist.get() == expected);
+    REQUIRE(hist.getReverse() == expected);
     REQUIRE(hist.size == 1);
   }
 }
