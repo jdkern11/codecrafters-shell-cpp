@@ -16,12 +16,12 @@
 TrieNode::TrieNode(char letter) : letter(letter), isEndOfWord(false) {}
 Trie::Trie() : root(new TrieNode('\0')) {}
 
-Trie::~Trie() { deleteTrieNode(this->root); }
+Trie::~Trie() { this->deleteTrieNode(this->root); }
 
 void Trie::deleteTrieNode(TrieNode* node) {
   if (node == nullptr) return;
   for (auto& child : node->children) {
-    deleteTrieNode(child.second);
+    this->deleteTrieNode(child.second);
   }
   delete node;
 }

@@ -22,10 +22,12 @@
 #include <unordered_set>
 #include <utility>
 
+#include "./history.hpp"
 #include "./trie.hpp"
 #include "./utils.hpp"
 
 namespace fs = std::filesystem;
+namespace shist = shell::history;
 
 bool run = true;
 
@@ -53,7 +55,18 @@ int main() {
              return current_dir.string() + '\n';
            }},
           {"cd", ChangeDirectoryCommand},
-          {"history", [](const std::string &) -> std::string { return ""; }},
+          {"history",
+           [](const std::string &) -> std::string {
+             auto history = shist::GetHistory();
+             std::string res = "";
+             int input_count = 1;
+             for (auto it = history.rbegin(); it != history.rend(); ++it) {
+               res = res + "    " + std::to_string(input_count) + "  " + *it +
+                     '\n';
+               input_count++;
+             }
+             return res;
+           }},
       };
   std::unordered_set<std::string> valid_commands;
   for (const auto &pair : builtin_commands) {
@@ -71,6 +84,9 @@ int main() {
   FillTrieWithPathExecutables(&trie);
   GLOBAL_TRIE = &trie;
 
+  shist::History hist = shist::History{};
+  shist::GLOBAL_HISTORY = &hist;
+
   rl_completion_entry_function = &AutoComplete;
   rl_bind_key('\t', rl_complete);
   int in_fd = STDIN_FILENO;
@@ -79,6 +95,7 @@ int main() {
     char *char_input = readline("$ ");
     std::string user_inputs{char_input};
     free(char_input);
+    hist.insert(user_inputs);
     auto inputs = SplitText(user_inputs, '|');
     std::vector<std::pair<pid_t, int>> pids;
     for (size_t i = 0; i < inputs.size(); i++) {
@@ -249,17 +266,17 @@ void ExecuteInput(
         close(stdoutPipe[1]);
         close(stderrPipe[1]);
 
-        int buffer_size = 1;
-        char buffer[buffer_size];
+        int kBufferSize = 1;
+        char buffer[kBufferSize];
         ssize_t bytes;
-        while ((bytes = read(stdoutPipe[0], buffer, buffer_size)) > 0) {
+        while ((bytes = read(stdoutPipe[0], buffer, kBufferSize)) > 0) {
           if (redirection_info.type == RedirectType::OUTPUT) {
             write_file << std::string(buffer, bytes);
           } else {
             std::cout << std::string(buffer, bytes) << std::flush;
           }
         }
-        while ((bytes = read(stderrPipe[0], buffer, buffer_size)) > 0) {
+        while ((bytes = read(stderrPipe[0], buffer, kBufferSize)) > 0) {
           if (redirection_info.type == RedirectType::ERROR) {
             write_file << std::string(buffer, bytes);
           } else {

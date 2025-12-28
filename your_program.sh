@@ -22,7 +22,7 @@ set -e # Exit early if any commands fail
   cmake ../tests/
   cmake --build .
   cd ..
-  tests_build/tests
+  valgrind --leak-check=full --error-exitcode=1 tests_build/tests
 )
 
 # Copied from .codecrafters/run.sh

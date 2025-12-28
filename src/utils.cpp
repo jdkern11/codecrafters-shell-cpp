@@ -29,19 +29,20 @@ std::vector<std::string> SplitText(const std::string &input, char delimiter,
   std::vector<std::string> res;
   size_t prior_delimiter_ind = 0;
   bool backslash = false;
-  spdlog::debug("Splitting text {} with delimiter {} and format {}.", input, delimiter, format);
+  spdlog::debug("Splitting text {} with delimiter {} and format {}.", input,
+                delimiter, format);
   for (size_t i = 0; i < input.length(); i++) {
     if (input[i] == '\\' && !backslash && format) {
       backslash = true;
     } else if (input[i] == '"' && !backslash && format) {
       spdlog::debug("Found a \"");
-      size_t j = input.find('\"', i+1);
+      size_t j = input.find('\"', i + 1);
       if (j == std::string::npos) {
         continue;
       }
       bool found = true;
-      while (input[j-1] == '\\') {
-        j = input.find('\"', j+1);
+      while (input[j - 1] == '\\') {
+        j = input.find('\"', j + 1);
         if (j == std::string::npos) {
           found = false;
           break;
@@ -56,13 +57,13 @@ std::vector<std::string> SplitText(const std::string &input, char delimiter,
       i = j;
     } else if (input[i] == '\'' && !backslash && format) {
       spdlog::debug("Found a '");
-      size_t j = input.find('\'', i+1);
+      size_t j = input.find('\'', i + 1);
       if (j == std::string::npos) {
         continue;
       }
       bool found = true;
-      while (input[j-1] == '\\') {
-        j = input.find('\'', j+1);
+      while (input[j - 1] == '\\') {
+        j = input.find('\'', j + 1);
         if (j == std::string::npos) {
           found = false;
           break;

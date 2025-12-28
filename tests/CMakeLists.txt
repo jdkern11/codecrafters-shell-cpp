@@ -9,6 +9,7 @@ find_package(spdlog CONFIG REQUIRED)
 set(SOURCE_FILES
   ../src/utils.cpp
   ../src/trie.cpp
+  ../src/history.cpp
 )
 
 find_package(Catch2 2 REQUIRED)
