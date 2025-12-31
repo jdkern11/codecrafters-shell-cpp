@@ -40,6 +40,8 @@ void sigterm_handler(int signal) {
 }
 
 int main() {
+  char *val = getenv("HISTFILE");
+  static const std::string kHistoryFile = val == NULL ? std::string(".shell_history") : std::string(val);
   std::cout << std::unitbuf;
   std::cerr << std::unitbuf;
   std::unordered_map<std::string,
@@ -47,7 +49,7 @@ int main() {
       builtin_commands = {
           {"exit",
            [](const std::string &) -> std::string {
-             shist::GLOBAL_HISTORY->save(".shell_history", std::ios_base::out);
+             shist::GLOBAL_HISTORY->save(kHistoryFile, std::ios_base::out);
              kill(getppid(), SIGTERM);
              return "";
            }},
@@ -110,7 +112,7 @@ int main() {
 
   shist::History hist = shist::History{};
   shist::GLOBAL_HISTORY = &hist;
-  hist.load(".shell_history");
+  hist.load(kHistoryFile);
 
   rl_completion_entry_function = &AutoComplete;
   rl_bind_key('\t', rl_complete);
