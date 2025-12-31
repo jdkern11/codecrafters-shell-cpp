@@ -15,7 +15,6 @@
 #include <filesystem>
 #include <fstream>
 #include <functional>
-#include <vector>
 #include <iostream>
 #include <ranges>
 #include <string>
@@ -23,6 +22,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
+#include <vector>
 
 #include "./history.hpp"
 #include "./trie.hpp"
@@ -47,7 +47,7 @@ int main() {
       builtin_commands = {
           {"exit",
            [](const std::string &) -> std::string {
-             shist::GLOBAL_HISTORY->save(".shell_history");
+             shist::GLOBAL_HISTORY->save(".shell_history", std::ios_base::out);
              kill(getppid(), SIGTERM);
              return "";
            }},
@@ -64,12 +64,22 @@ int main() {
              int hist_size = history.size();
              if (!arg.empty()) {
                auto args = SplitText(arg, ' ');
-               if (args.size() > 1) {
-                 throw std::runtime_error("too many arguments.");
-               }
-               hist_size = std::stoi(args[0]);
-               if (hist_size < 0) {
-                 throw std::runtime_error("invalid option.");
+               for (size_t i = 0; i < args.size(); i++) {
+                 if (args[i] == "-r") {
+                   shist::GLOBAL_HISTORY->load(args[++i]);
+                   return "";
+                 } else if (args[i] == "-w") {
+                   shist::GLOBAL_HISTORY->save(args[++i], std::ios_base::out);
+                   return "";
+                 } else if (args[i] == "-a") {
+                   shist::GLOBAL_HISTORY->save(args[++i], std::ios_base::app);
+                   return "";
+                 } else {
+                   hist_size = std::stoi(args[i]);
+                   if (hist_size < 0) {
+                     throw std::runtime_error("invalid option.");
+                   }
+                 }
                }
              }
              size_t i =
@@ -120,7 +130,7 @@ int main() {
     for (size_t i = 0; i < inputs.size(); i++) {
       // Need a special exception for cd.
       auto [command, args] = GetCommandAndArgs(inputs[i]);
-      if (command == "cd") {
+      if (command == "cd" || command == "history") {
         ExecuteInput(inputs[i], in_fd, STDOUT_FILENO, builtin_commands);
         continue;
       }

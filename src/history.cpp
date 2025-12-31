@@ -115,17 +115,16 @@ void hist::History::setCurrentTxt(const std::string& txt) {
   this->current->txt = txt;
 }
 
-void hist::History::save(const std::string& filename) {
+void hist::History::save(const std::string& filename,
+                         std::ios_base::openmode open_mode) {
   std::ofstream write_file;
   fs::path file_path{filename};
-  write_file.open(file_path);
+  write_file.open(file_path, open_mode);
   Node* curr = this->tail;
   while (curr != this->head) {
     write_file << curr->txt;
     curr = curr->prior;
-    if (curr != this->head) {
-      write_file << '\n';
-    }
+    write_file << '\n';
   }
   write_file.close();
 }
@@ -137,7 +136,9 @@ void hist::History::load(const std::string& filename) {
   if (!read_file) return;
   std::string line;
   while (std::getline(read_file, line)) {
-    this->insert(line);
+    if (!line.empty()) {
+      this->insert(line);
+    }
   }
   read_file.close();
 }

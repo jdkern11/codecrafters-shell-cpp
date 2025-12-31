@@ -2,6 +2,7 @@
 
 #include <catch2/catch.hpp>
 #include <cstdio>
+#include <filesystem>
 #include <string>
 #include <vector>
 
@@ -68,11 +69,21 @@ TEST_CASE("HistoryTests", "[History]") {
     hist1.insert("pwd");
     hist1.insert("cd tests");
     hist1.insert("ls");
-    hist1.save("test_save_file.txt");
+    hist1.save("test_save_file.txt", std::ios_base::out);
     shist::History hist2{4};
     hist2.load("test_save_file.txt");
     std::vector<std::string> expected = {"ls", "cd tests", "pwd", "history"};
     REQUIRE(hist2.get() == expected);
+    hist2.save("test_save_file.txt", std::ios_base::out);
+    shist::History hist3{5};
+    hist3.load("test_save_file.txt");
+    REQUIRE(hist3.get() == expected);
+    hist3.save("test_save_file.txt", std::ios_base::app);
+    shist::History hist4{10};
+    hist4.load("test_save_file.txt");
+    expected = {"ls", "cd tests", "pwd", "history",
+                "ls", "cd tests", "pwd", "history"};
+    REQUIRE(hist4.get() == expected);
     remove("test_save_file.txt");
   }
 }

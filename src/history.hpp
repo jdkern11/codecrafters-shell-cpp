@@ -1,6 +1,7 @@
 #ifndef SRC_HISTORY_H_
 #define SRC_HISTORY_H_
 
+#include <filesystem>
 #include <string>
 #include <vector>
 
@@ -22,7 +23,7 @@ class History {
   void incrementCurrent();
   void decrementCurrent();
   void setCurrentTxt(const std::string& txt);
-  void save(const std::string& filename);
+  void save(const std::string& filename, std::ios_base::openmode);
   void load(const std::string& filename);
   std::string getCurrentTxt();
   std::vector<std::string> get();
