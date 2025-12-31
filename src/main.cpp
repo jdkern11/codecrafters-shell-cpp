@@ -49,7 +49,7 @@ int main() {
       builtin_commands = {
           {"exit",
            [](const std::string &) -> std::string {
-             shist::GLOBAL_HISTORY->save(kHistoryFile, std::ios_base::out);
+             shist::GLOBAL_HISTORY->save(kHistoryFile, std::ios_base::app);
              kill(getppid(), SIGTERM);
              return "";
            }},

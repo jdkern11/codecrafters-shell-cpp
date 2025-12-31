@@ -148,6 +148,7 @@ void hist::History::load(const std::string& filename) {
       this->insert(line);
     }
   }
+  this->last_written = this->head->next;
   read_file.close();
 }
 
