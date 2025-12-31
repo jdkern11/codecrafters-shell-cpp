@@ -36,6 +36,7 @@ class History {
   Node* head;
   Node* tail;
   Node* current;
+  Node* last_written;
   void deleteTail();
   void deleteNode(Node* node);
   void initalize();

@@ -26,6 +26,7 @@ void hist::History::initalize() {
   this->head = node;
   this->tail = node;
   this->current = node;
+  this->last_written = nullptr;
 }
 hist::History::~History() { this->deleteNode(this->head); }
 
@@ -39,6 +40,9 @@ void hist::History::deleteTail() {
   Node* node = this->tail;
   if (node == this->head) return;
   spdlog::debug("Deleting tail node with text \"{}\".", node->txt);
+  if (this->last_written == this->tail) {
+    this->last_written = node->prior;
+  }
   this->tail = node->prior;
   this->tail->next = nullptr;
   delete node;
@@ -117,15 +121,19 @@ void hist::History::setCurrentTxt(const std::string& txt) {
 
 void hist::History::save(const std::string& filename,
                          std::ios_base::openmode open_mode) {
+  if (open_mode == std::ios_base::out) {
+    this->last_written = nullptr;
+  }
   std::ofstream write_file;
   fs::path file_path{filename};
   write_file.open(file_path, open_mode);
-  Node* curr = this->tail;
+  Node* curr =
+      this->last_written == nullptr ? this->tail : this->last_written->prior;
   while (curr != this->head) {
-    write_file << curr->txt;
+    write_file << curr->txt << '\n';
     curr = curr->prior;
-    write_file << '\n';
   }
+  this->last_written = this->head->next;
   write_file.close();
 }
 

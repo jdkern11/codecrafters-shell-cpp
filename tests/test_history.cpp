@@ -75,15 +75,14 @@ TEST_CASE("HistoryTests", "[History]") {
     std::vector<std::string> expected = {"ls", "cd tests", "pwd", "history"};
     REQUIRE(hist2.get() == expected);
     hist2.save("test_save_file.txt", std::ios_base::out);
+    hist2.insert("ls");
+    expected = {"ls", "ls", "cd tests", "pwd"};
+    REQUIRE(hist2.get() == expected);
+    hist2.save("test_save_file.txt", std::ios_base::app);
     shist::History hist3{5};
+    expected = {"ls", "ls", "cd tests", "pwd", "history"};
     hist3.load("test_save_file.txt");
     REQUIRE(hist3.get() == expected);
-    hist3.save("test_save_file.txt", std::ios_base::app);
-    shist::History hist4{10};
-    hist4.load("test_save_file.txt");
-    expected = {"ls", "cd tests", "pwd", "history",
-                "ls", "cd tests", "pwd", "history"};
-    REQUIRE(hist4.get() == expected);
     remove("test_save_file.txt");
   }
 }
