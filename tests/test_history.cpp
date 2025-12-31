@@ -1,6 +1,7 @@
 #include <spdlog/spdlog.h>
 
 #include <catch2/catch.hpp>
+#include <cstdio>
 #include <string>
 #include <vector>
 
@@ -58,5 +59,20 @@ TEST_CASE("HistoryTests", "[History]") {
     REQUIRE(hist.get() == expected);
     REQUIRE(hist.getReverse() == expected);
     REQUIRE(hist.size == 1);
+  }
+
+  SECTION("save/load") {
+    shist::History hist1{5};
+    hist1.insert("ls");
+    hist1.insert("history");
+    hist1.insert("pwd");
+    hist1.insert("cd tests");
+    hist1.insert("ls");
+    hist1.save("test_save_file.txt");
+    shist::History hist2{4};
+    hist2.load("test_save_file.txt");
+    std::vector<std::string> expected = {"ls", "cd tests", "pwd", "history"};
+    REQUIRE(hist2.get() == expected);
+    remove("test_save_file.txt");
   }
 }

@@ -7,7 +7,7 @@
 namespace shell::history {
 
 struct Node {
-  const std::string txt;
+  std::string txt;
   Node* prior;
   Node* next;
 
@@ -19,6 +19,12 @@ class History {
   size_t size;
   size_t max_size;
   void insert(const std::string& txt);
+  void incrementCurrent();
+  void decrementCurrent();
+  void setCurrentTxt(const std::string& txt);
+  void save(const std::string& filename);
+  void load(const std::string& filename);
+  std::string getCurrentTxt();
   std::vector<std::string> get();
   std::vector<std::string> getReverse();
   History();
@@ -28,12 +34,16 @@ class History {
  private:
   Node* head;
   Node* tail;
+  Node* current;
   void deleteTail();
   void deleteNode(Node* node);
+  void initalize();
 };
 
 extern History* GLOBAL_HISTORY;
 std::vector<std::string> GetHistory();
+
+int ArrowHistory(int count, int key);
 }  // namespace shell::history
 
 #endif  // SRC_HISTORY_H_

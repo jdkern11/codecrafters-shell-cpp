@@ -1,6 +1,9 @@
 #include <spdlog/spdlog.h>
 
+#include <algorithm>
 #include <catch2/catch.hpp>
+#include <string>
+#include <vector>
 
 #include "trie.hpp"
 

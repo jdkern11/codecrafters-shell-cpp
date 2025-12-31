@@ -15,6 +15,7 @@
 #include <filesystem>
 #include <fstream>
 #include <functional>
+#include <vector>
 #include <iostream>
 #include <ranges>
 #include <string>
@@ -46,6 +47,7 @@ int main() {
       builtin_commands = {
           {"exit",
            [](const std::string &) -> std::string {
+             shist::GLOBAL_HISTORY->save(".shell_history");
              kill(getppid(), SIGTERM);
              return "";
            }},
@@ -98,16 +100,21 @@ int main() {
 
   shist::History hist = shist::History{};
   shist::GLOBAL_HISTORY = &hist;
+  hist.load(".shell_history");
 
   rl_completion_entry_function = &AutoComplete;
   rl_bind_key('\t', rl_complete);
+  rl_bind_keyseq("\\e[A", &shist::ArrowHistory);
+  rl_bind_keyseq("\\e[B", &shist::ArrowHistory);
   int in_fd = STDIN_FILENO;
   // spdlog::set_level(spdlog::level::debug);
   while (run) {
     char *char_input = readline("$ ");
     std::string user_inputs{char_input};
     free(char_input);
-    hist.insert(user_inputs);
+    if (!Trim(user_inputs).empty()) {
+      hist.insert(user_inputs);
+    }
     auto inputs = SplitText(user_inputs, '|');
     std::vector<std::pair<pid_t, int>> pids;
     for (size_t i = 0; i < inputs.size(); i++) {
